@@ -1,0 +1,461 @@
+/* Natural Organic: scoped to the plugin, with warm paper and botanical accents. */
+.pl-panel {
+  --pl-cream: #faf6f1;
+  --pl-paper: #fffdf9;
+  --pl-brown: #5c4033;
+  --pl-ink: #44403c;
+  --pl-muted: #6b6258;
+  --pl-olive: #384830;
+  --pl-line: #ded6cb;
+  width: 380px;
+  min-width: 280px;
+  max-width: 650px;
+  min-height: 0;
+  background: var(--pl-cream);
+  color-scheme: light;
+  container: paper-lens / inline-size;
+}
+.pl-body {
+  height: 100%;
+  min-height: 0;
+  overflow: auto;
+  padding: 24px 16px 32px;
+  font:
+    14px/1.7 'Segoe UI',
+    'Microsoft YaHei',
+    sans-serif;
+  color: var(--pl-ink);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cg fill='none' stroke='%235c4033' stroke-opacity='.055' stroke-linecap='round'%3E%3Cpath d='M8 17q7-2 12 0m49 16 12-1M28 69l15 1m41 29q8-2 17 0M13 103l9-1M93 12l9 1M52 48l6 1'/%3E%3C/g%3E%3C/svg%3E");
+  scrollbar-width: thin;
+  scrollbar-color: #b7aa98 var(--pl-cream);
+}
+.pl-body,
+.pl-body * {
+  box-sizing: border-box;
+}
+.pl-body [hidden] {
+  display: none !important;
+}
+.pl-body h2,
+.pl-body h3,
+.pl-body summary {
+  font-family: 'Palatino Linotype', 'Songti SC', 'SimSun', serif;
+  color: var(--pl-brown);
+  letter-spacing: -0.025em;
+  line-height: 1.4;
+}
+.pl-body h2 {
+  font-size: 28px;
+  margin: 0;
+}
+.pl-body h3 {
+  font-size: 21px;
+  margin: 0 0 16px;
+}
+.pl-body p {
+  margin: 12px 0;
+  max-width: 70ch;
+  overflow-wrap: anywhere;
+}
+.pl-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.pl-heading {
+  flex: 1;
+  min-width: 0;
+}
+.pl-body .muted {
+  color: var(--pl-muted);
+  font-size: 13px;
+}
+.pl-body .pl-intro {
+  margin: 16px 0 24px;
+}
+.pl-status {
+  padding: 0 4px;
+  color: var(--pl-olive);
+  font-size: 13px;
+}
+.pl-card,
+.pl-body details {
+  background: var(--pl-cream);
+  border: 1px solid var(--pl-line);
+  border-radius: 32px 27px 35px 25px / 26px 34px 28px 32px;
+  padding: 24px;
+  margin: 24px 0 0;
+  box-shadow: 0 2px 5px #5c403308;
+}
+.pl-body label {
+  display: block;
+  margin: 16px 0;
+  font-size: 13px;
+  font-weight: 500;
+  min-width: 0;
+}
+.pl-body input:not([type='checkbox']),
+.pl-body select {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  min-height: 44px;
+  padding: 12px 20px;
+  margin-top: 8px;
+  border: 1px solid var(--pl-line);
+  border-radius: 24px 20px 26px 21px / 21px 25px 20px 24px;
+  background-color: #ffffff;
+  color: var(--pl-ink);
+  font:
+    14px/1.5 'Segoe UI',
+    'Microsoft YaHei',
+    sans-serif;
+  transition:
+    background-color 500ms ease-in-out,
+    border-color 500ms ease-in-out,
+    border-radius 500ms ease-in-out,
+    color 500ms ease-in-out;
+}
+.pl-body input::placeholder {
+  color: #78716c;
+  opacity: 1;
+}
+.pl-body select {
+  appearance: none;
+  padding-right: 38px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='12'%3E%3Cpath d='M3 4q5 8 10 0' stroke='%235c4033' stroke-width='1.7' stroke-linecap='round' fill='none'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 15px center;
+  text-overflow: ellipsis;
+}
+.pl-body .pl-check {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 44px;
+  cursor: pointer;
+}
+.pl-body input[type='checkbox'] {
+  appearance: none;
+  flex: 0 0 24px;
+  width: 24px;
+  height: 24px;
+  margin: 0;
+  border: 1px solid #8e8273;
+  border-radius: 9px 7px 10px 6px;
+  background: #ffffff;
+  display: grid;
+  place-content: center;
+  color: var(--pl-paper);
+  cursor: pointer;
+  transition:
+    background-color 500ms ease-in-out,
+    border-radius 500ms ease-in-out;
+}
+.pl-body input[type='checkbox']:checked {
+  background: var(--pl-olive);
+  border-color: var(--pl-olive);
+}
+.pl-body input[type='checkbox']:checked::after {
+  content: '✓';
+  font-size: 18px;
+  line-height: 1;
+}
+.pl-body button {
+  min-height: 44px;
+  max-width: 100%;
+  padding: 12px 24px;
+  border: 1px solid #c7bbaa;
+  border-radius: 28px 23px 30px 22px / 23px 29px 24px 27px;
+  background: var(--pl-paper);
+  color: var(--pl-brown);
+  font:
+    500 13px/1.5 'Segoe UI',
+    'Microsoft YaHei',
+    sans-serif;
+  cursor: pointer;
+  overflow-wrap: anywhere;
+  transition:
+    background-color 500ms ease-in-out,
+    color 500ms ease-in-out,
+    border-color 500ms ease-in-out,
+    border-radius 650ms ease-in-out,
+    transform 500ms ease-in-out;
+}
+.pl-body button:not(:disabled):hover {
+  background: #e7e5e4;
+  color: var(--pl-olive);
+  border-color: #8b9d77;
+  border-radius: 22px 29px 24px 30px / 28px 23px 29px 22px;
+  transform: translateY(1px);
+}
+.pl-body button:not(:disabled):active {
+  background: #dce3d3;
+  color: #303d29;
+  transform: translateY(2px);
+}
+.pl-body .primary {
+  background: var(--pl-brown);
+  color: var(--pl-cream);
+  border-color: var(--pl-brown);
+  width: 100%;
+}
+.pl-body .primary:not(:disabled):hover {
+  background: var(--pl-olive);
+  color: var(--pl-cream);
+  border-color: var(--pl-olive);
+}
+.pl-body .primary:not(:disabled):active {
+  background: #303d29;
+  color: var(--pl-cream);
+}
+.pl-body .pl-quiet {
+  background: transparent;
+}
+.pl-body button:disabled,
+.pl-body input:disabled,
+.pl-body select:disabled {
+  background-color: #eee8df;
+  color: var(--pl-muted);
+  border-color: var(--pl-line);
+  cursor: default;
+}
+.pl-body input:not(:disabled):hover,
+.pl-body select:not(:disabled):hover {
+  border-color: #8e8273;
+}
+.pl-body input:not(:disabled):active,
+.pl-body select:not(:disabled):active {
+  border-color: var(--pl-olive);
+}
+.pl-body :is(button, input, select, summary):focus-visible {
+  outline: 2px solid var(--pl-olive);
+  outline-offset: 3px;
+}
+.pl-body :is(input, select):focus {
+  border-color: #78716c;
+  box-shadow: 0 0 0 2px #e7e5e4;
+}
+.pl-body .pl-check:hover {
+  color: var(--pl-olive);
+}
+.pl-row {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  align-items: center;
+  margin: 16px 0;
+}
+.pl-row > button {
+  flex: 1 1 150px;
+}
+.pl-header > button {
+  flex: 0 0 auto;
+  padding-inline: 18px;
+}
+.pl-body summary {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 44px;
+  font-size: 19px;
+  cursor: pointer;
+  list-style: none;
+  transition: color 500ms ease-in-out;
+}
+.pl-body summary::-webkit-details-marker {
+  display: none;
+}
+.pl-body summary::after {
+  content: '+';
+  margin-left: auto;
+  font:
+    22px/1 Georgia,
+    serif;
+}
+.pl-body details[open] > summary::after {
+  content: '−';
+}
+.pl-body summary:hover,
+.pl-body summary:active {
+  color: var(--pl-olive);
+}
+.pl-body details[open] > summary {
+  margin-bottom: 16px;
+}
+/* Conditions use dividers, not nested cards. */
+.pl-rule {
+  padding: 8px 0 16px;
+  margin-top: 16px;
+  border-top: 1px solid var(--pl-line);
+}
+.pl-rule > button {
+  margin-top: 4px;
+  background: transparent;
+}
+.pl-keywords {
+  margin-top: 16px;
+}
+.pl-keywords h3 {
+  font-size: 16px;
+  margin: 20px 0 8px;
+}
+.pl-keyword-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 0;
+  margin: 8px 0;
+  list-style: none;
+}
+.pl-keyword-list li {
+  padding: 6px 12px;
+  background: #e4e9db;
+  color: #384830;
+  border-radius: 16px 12px 18px 13px;
+  overflow-wrap: anywhere;
+  max-width: 100%;
+}
+.pl-keywords .pl-paper-title {
+  font-family: 'Palatino Linotype', 'SimSun', serif;
+  font-size: 16px;
+  color: var(--pl-brown);
+}
+@container paper-lens (min-width:440px) {
+  .pl-body {
+    padding: 32px 24px;
+  }
+  .pl-card,
+  .pl-body details {
+    padding: 32px;
+    margin-top: 32px;
+  }
+  .pl-body h2 {
+    font-size: 32px;
+  }
+  .pl-rule {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 0 16px;
+  }
+  .pl-rule > div,
+  .pl-rule > button {
+    grid-column: 1 / -1;
+  }
+  .pl-rule > button {
+    justify-self: start;
+  }
+}
+@container paper-lens (max-width:320px) {
+  .pl-body {
+    padding-inline: 12px;
+  }
+  .pl-card,
+  .pl-body details {
+    padding: 20px 16px;
+  }
+  .pl-body h2 {
+    font-size: 25px;
+  }
+  .pl-header {
+    gap: 8px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .pl-body *,
+  .pl-body *::before,
+  .pl-body *::after {
+    transition: none !important;
+    animation: none !important;
+    transform: none !important;
+  }
+}
+
+/* Navigation-rail controls remain reachable when the plugin panel is hidden. */
+.pl-sidenav-entry {
+  display: flex;
+  justify-content: center;
+  flex: 0 0 auto;
+}
+.pl-sidenav-toggle {
+  appearance: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 40px;
+  padding: 4px;
+  margin: 2px 0;
+  border: 1px solid transparent;
+  border-radius: 13px 10px 14px 11px;
+  background: transparent;
+  cursor: pointer;
+  transition:
+    background-color 500ms ease-in-out,
+    border-color 500ms ease-in-out;
+}
+.pl-sidenav-toggle img {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+  pointer-events: none;
+}
+.pl-sidenav-toggle:hover {
+  background: #e7e5e4;
+  border-color: #8b9d77;
+}
+.pl-sidenav-toggle[aria-pressed='true'] {
+  background: #e4e9db;
+  border-color: #8b9d77;
+}
+.pl-sidenav-toggle:active {
+  background: #d4dcc7;
+}
+.pl-sidenav-toggle:focus-visible {
+  outline: 2px solid #384830;
+  outline-offset: -2px;
+}
+.pl-brand-icon {
+  display: block;
+  width: 56px;
+  height: 56px;
+  object-fit: contain;
+  margin-bottom: 12px;
+}
+.pl-body details h3 {
+  margin-top: 28px;
+  margin-bottom: 8px;
+}
+.pl-body details > summary + h3 {
+  margin-top: 8px;
+}
+.pl-body .pl-global-title {
+  font-size: 27px;
+}
+.pl-body .pl-section-description {
+  margin: 0 0 16px;
+}
+.pl-body .pl-search-submit {
+  margin-top: 20px;
+}
+.pl-body .pl-rule-actions {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 8px;
+  margin-top: 12px;
+}
+.pl-body .pl-rule-actions > button {
+  width: 100%;
+  min-width: 0;
+  padding: 12px 8px;
+}
+.pl-body input[readonly] {
+  background-color: #eee8df;
+  color: #5c4033;
+  cursor: default;
+}
+@media (prefers-reduced-motion: reduce) {
+  .pl-sidenav-toggle {
+    transition: none;
+  }
+}

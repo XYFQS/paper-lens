@@ -1,0 +1,6 @@
+dist/
+.test/
+plot/
+addon/content/icons/
+node_modules/
+LICENSE

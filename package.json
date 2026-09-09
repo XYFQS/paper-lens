@@ -1,0 +1,15 @@
+{
+  "name": "zotero-paper-lens",
+  "version": "1.0.0",
+  "private": true,
+  "license": "MIT",
+  "scripts": {
+    "test": "node --test tests/*.test.cjs",
+    "build": "powershell -ExecutionPolicy Bypass -File scripts/build.ps1",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "devDependencies": {
+    "prettier": "3.6.2"
+  }
+}

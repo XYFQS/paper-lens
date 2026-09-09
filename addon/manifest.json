@@ -1,0 +1,19 @@
+{
+  "manifest_version": 2,
+  "name": "文献透镜 · Paper Lens",
+  "version": "1.0.0",
+  "description": "双语研究关键词与本地条件检索",
+  "author": "PPTom",
+  "applications": {
+    "zotero": {
+      "id": "paper-lens@local.zotero",
+      "update_url": "https://example.invalid/paper-lens/updates.json",
+      "strict_min_version": "9.0.6",
+      "strict_max_version": "9.0.*"
+    }
+  },
+  "icons": {
+    "48": "content/icons/paper-lens.png",
+    "96": "content/icons/paper-lens.png"
+  }
+}
