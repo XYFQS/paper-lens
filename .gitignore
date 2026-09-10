@@ -1,5 +1,6 @@
 dist/
 .test/
+.dev/
 node_modules/
 *.log
 .env*

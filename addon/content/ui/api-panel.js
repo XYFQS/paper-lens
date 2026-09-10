@@ -6,7 +6,7 @@
     mountAPI() {
       this.apiEditing = !this.app.get('secret', '');
       const api = this.section('API 设置', this.apiEditing);
-      this.subheading(api, '模型连接', '保存后锁定配置；需要更换服务或模型时，先点击“修改 API”。');
+      this.apiSection = api;
       this.url = this.field(api, 'Base URL', 'input', { type: 'url' });
       this.model = this.field(api, '模型', 'input');
       this.key = this.field(api, 'API Key', 'input', {
@@ -19,7 +19,7 @@
         if (!this.apiEditing) {
           this.apiEditing = true;
           this.key.value = '';
-          this.app.status('正在修改 API；密钥留空会保留已存密钥。');
+          this.app.status('修改 API：密钥留空则保留。');
           return;
         }
         root.LensCore.endpoint(this.url.value);
@@ -30,7 +30,7 @@
         this.app.set('url', this.url.value.trim());
         this.app.set('model', this.model.value.trim());
         this.apiEditing = false;
-        this.app.status('API 配置已保存并锁定。可点击“测试连接”验证。');
+        this.app.status('API 已保存，可测试连接。');
       });
       this.apiTest = this.button('测试连接', async () => {
         const token = { cancelled: false };

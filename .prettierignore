@@ -1,5 +1,6 @@
 dist/
 .test/
+.dev/
 plot/
 addon/content/icons/
 node_modules/

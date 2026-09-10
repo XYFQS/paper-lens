@@ -47,13 +47,16 @@
       const d = this.el('details');
       d.open = open;
       d.append(this.el('summary', title));
-      this.body.append(d);
+      (this.sectionHost || this.body).append(d);
       return d;
     }
     mount() {
       this.style = this.el('link', undefined, {
         rel: 'stylesheet',
-        href: this.app.uri + 'content/style.css',
+        href:
+          this.app.uri +
+          'content/style.css' +
+          (this.app.uri.startsWith('file:') ? `?dev=${Date.now()}` : ''),
       });
       this.doc.documentElement.append(this.style);
       this.panel = this.doc.createXULElement('vbox');
@@ -75,90 +78,48 @@
         this.el('h2', '文献透镜'),
       );
       const header = this.el('header', undefined, { class: 'pl-header' });
-      header.append(heading);
-      this.body.append(
-        header,
-        this.el('p', '从文献中梳理线索，让研究脉络清晰生长。', { class: 'muted pl-intro' }),
+      this.readiness = this.el('button', undefined, { type: 'button', class: 'pl-readiness' });
+      this.readiness.append(
+        this.el('span', undefined, { class: 'pl-readiness-dot', 'aria-hidden': 'true' }),
       );
-      this.status = this.el('p', undefined, {
-        class: 'pl-status',
-        role: 'status',
-        'aria-live': 'polite',
+      this.readinessText = this.el('span');
+      this.readiness.append(this.readinessText);
+      this.readiness.addEventListener('click', () => {
+        this.selectPage(this.readinessPage);
+        const section = this[this.readinessSection];
+        if (section) section.open = true;
       });
-      this.body.append(this.status);
+      header.append(heading, this.readiness);
+      this.body.append(header);
+      if (this.app.uri.startsWith('file:')) {
+        this.body.append(this.el('p', '开发预览 · 独立演示文库', { class: 'pl-dev-note' }));
+      }
+      this.mountWorkspace();
+      this.sectionHost = this.pages.search;
       this.mountSearch();
-      this.mountMetadata();
       this.mountPreview();
+      this.sectionHost = this.pages.prepare;
+      this.mountMetadata();
+      this.sectionHost = this.pages.settings;
       this.mountAPI();
+      this.mountLibrarySettings();
+      this.sectionHost = null;
+      this.selectPage(Object.keys(this.app.data.records).length ? 'search' : 'prepare');
       this.menu = this.doc.createXULElement('menuitem');
       this.menu.setAttribute('label', '文献透镜：显示 / 隐藏');
       this.menu.addEventListener('command', () => this.toggle());
       this.doc.getElementById('menu_ToolsPopup').append(this.menu);
       this.keywords.append(
-        this.el('p', '在主列表选择论文后，点击“读取所选论文”查看关键词。', { class: 'muted' }),
+        this.el('p', '请在主列表选择一篇论文。', {
+          class: 'muted',
+        }),
       );
       this.navigation = new root.LensSidebarToggle(this);
       this.collections();
       this.render();
     }
-    mountMetadata() {
-      const index = this.section('元数据与 AI 关键词', true);
-      this.subheading(index, '元数据索引', '将条目信息保存在本地，方便快速检索。');
-      this.auto = this.select(index, '元数据更新', [
-        ['manual', '手动更新'],
-        ['auto', '自动更新整个个人文库'],
-      ]);
-      this.auto.value = this.app.get('auto', false) ? 'auto' : 'manual';
-      this.auto.onchange = () => {
-        this.app.set('auto', this.auto.value === 'auto');
-        this.app.pending = true;
-        this.app.schedule();
-        this.app.status('元数据更新选项已保存。AI 分析始终手动启动。');
-      };
-      index.append(
-        this.row(
-          this.button('更新元数据', () => this.app.update(this.scope())),
-          this.button('重建缓存', () => this.app.update({}, true)),
-        ),
-      );
-      this.subheading(index, '双语关键词', '提取研究区域、研究对象与研究方法，不读取 PDF 全文。');
-      index.append(
-        this.row(
-          this.button('生成缺失关键词', () => this.app.analyze(this.scope())),
-          this.button('重新生成此范围', () => this.app.analyze(this.scope(), true)),
-        ),
-      );
-      this.cancel = this.el('button', '取消 AI');
-      this.cancel.onclick = () => this.app.cancel();
-      index.append(this.cancel);
-      index.append(
-        this.el(
-          'p',
-          '生成会发送此范围的条目元数据给所设 API；不读取 PDF。每批完成即保存，再次生成会继续处理缺失条目。',
-          { class: 'muted' },
-        ),
-      );
-      this.subheading(index, '标签保存', '选择仅在插件中保存，或同步到 Zotero 原生标签。');
-      this.native = this.select(index, '关键词保存方式', [
-        ['private', '仅插件本地缓存'],
-        ['native', '缓存 + Zotero 原生双语标签'],
-      ]);
-      this.native.value = this.app.get('native', false) ? 'native' : 'private';
-      index.append(
-        this.button('应用保存方式', async () => {
-          const enabled = this.native.value === 'native';
-          this.app.set('native', enabled);
-          await this.app.syncTags(!enabled);
-          this.app.status(
-            enabled
-              ? '双语标签已写入原生标签。'
-              : '关键词保留在插件中；仅移除本插件曾添加的原生标签。',
-          );
-        }),
-      );
-    }
     mountPreview() {
-      const preview = this.section('查看所选论文的关键词');
+      const preview = this.section('所选论文的研究关键词');
       this.lang = this.select(preview, '显示语言', [
         ['zh', '中文'],
         ['en', 'English'],
@@ -168,15 +129,14 @@
         this.app.set('language', this.lang.value);
         this.preview();
       };
-      preview.append(this.button('读取所选论文', () => this.preview()));
+      preview.append(this.button('查看所选论文', () => this.preview()));
       this.keywords = this.el('div', undefined, { class: 'pl-keywords', 'aria-live': 'polite' });
       preview.append(this.keywords);
     }
     subheading(parent, title, description, className = '') {
-      parent.append(
-        this.el('h3', title, { class: className }),
-        this.el('p', description, { class: 'muted pl-section-description' }),
-      );
+      parent.append(this.el('h3', title, { class: className }));
+      if (description)
+        parent.append(this.el('p', description, { class: 'muted pl-section-description' }));
     }
     toggle() {
       this.panel.hidden = !this.panel.hidden;
@@ -239,7 +199,10 @@
       this.status.textContent = this.app.message;
       this.locked = this.locked.filter((e) => e.isConnected);
       for (const e of this.locked) e.disabled = this.app.busy;
+      this.updateSearchControls();
       this.renderAPI();
+      this.renderWorkspace();
+      this.status.hidden = !this.app.message;
       this.cancel.hidden = !this.app.token;
     }
     destroy() {
@@ -250,6 +213,12 @@
       this.style?.remove();
     }
   }
-  Object.assign(View.prototype, root.LensSearchUI, root.LensAPIUI);
+  Object.assign(
+    View.prototype,
+    root.LensWorkspaceUI,
+    root.LensLibraryUI,
+    root.LensSearchUI,
+    root.LensAPIUI,
+  );
   root.LensView = View;
 })(this);

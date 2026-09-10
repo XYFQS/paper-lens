@@ -6,6 +6,7 @@
   "scripts": {
     "test": "node --test tests/*.test.cjs",
     "build": "powershell -ExecutionPolicy Bypass -File scripts/build.ps1",
+    "dev": "powershell -ExecutionPolicy Bypass -File scripts/dev.ps1",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },

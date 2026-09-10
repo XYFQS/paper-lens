@@ -16,6 +16,8 @@ async function startup({ rootURI }) {
     'core',
     'app',
     'ui/sidebar-toggle',
+    'ui/workspace',
+    'ui/library-panel',
     'ui/search-panel',
     'ui/api-panel',
     'view',

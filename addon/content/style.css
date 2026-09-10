@@ -21,7 +21,7 @@
   overflow: auto;
   padding: 24px 16px 32px;
   font:
-    14px/1.7 'Segoe UI',
+    14px/1.6 'Segoe UI',
     'Microsoft YaHei',
     sans-serif;
   color: var(--pl-ink);
@@ -89,7 +89,7 @@
 }
 .pl-body label {
   display: block;
-  margin: 16px 0;
+  margin: 12px 0;
   font-size: 13px;
   font-weight: 500;
   min-width: 0;
@@ -100,8 +100,8 @@
   width: 100%;
   min-width: 0;
   min-height: 44px;
-  padding: 12px 20px;
-  margin-top: 8px;
+  padding: 10px 14px;
+  margin-top: 6px;
   border: 1px solid var(--pl-line);
   border-radius: 24px 20px 26px 21px / 21px 25px 20px 24px;
   background-color: #ffffff;
@@ -164,7 +164,7 @@
 .pl-body button {
   min-height: 44px;
   max-width: 100%;
-  padding: 12px 24px;
+  padding: 10px 16px;
   border: 1px solid #c7bbaa;
   border-radius: 28px 23px 30px 22px / 23px 29px 24px 27px;
   background: var(--pl-paper);
@@ -209,6 +209,38 @@
   background: #303d29;
   color: var(--pl-cream);
 }
+/* Preparation actions keep light earth tones in every interactive state. */
+.pl-body .pl-library-action {
+  width: 100%;
+  min-height: 46px;
+  font-size: 14px;
+  font-weight: 600;
+}
+.pl-body .pl-action-sand {
+  background: #efe2cf;
+  color: var(--pl-brown);
+  border-color: #cdbb9f;
+}
+.pl-body .pl-action-sand:not(:disabled):hover {
+  background: #e7d6bd;
+}
+.pl-body .pl-action-sand:not(:disabled):active {
+  background: #dfcbaa;
+}
+.pl-body .pl-action-sage {
+  background: #e2e8d8;
+  color: var(--pl-olive);
+  border-color: #b7c3a7;
+}
+.pl-body .pl-action-sage:not(:disabled):hover {
+  background: #d6dfc8;
+}
+.pl-body .pl-action-sage:not(:disabled):active {
+  background: #cbd7ba;
+}
+.pl-body .pl-library-action + button {
+  margin-top: 12px;
+}
 .pl-body .pl-quiet {
   background: transparent;
 }
@@ -243,11 +275,12 @@
   display: flex;
   gap: 12px;
   flex-wrap: wrap;
-  align-items: center;
+  align-items: stretch;
   margin: 16px 0;
 }
 .pl-row > button {
-  flex: 1 1 150px;
+  flex: 1 1 110px;
+  min-width: 0;
 }
 .pl-header > button {
   flex: 0 0 auto;
@@ -283,15 +316,10 @@
 .pl-body details[open] > summary {
   margin-bottom: 16px;
 }
-/* Conditions use dividers, not nested cards. */
+/* Conditions are separated by whitespace, without nested cards or divider lines. */
 .pl-rule {
-  padding: 8px 0 16px;
+  padding: 0;
   margin-top: 16px;
-  border-top: 1px solid var(--pl-line);
-}
-.pl-rule > button {
-  margin-top: 4px;
-  background: transparent;
 }
 .pl-keywords {
   margin-top: 16px;
@@ -338,12 +366,8 @@
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     gap: 0 16px;
   }
-  .pl-rule > div,
-  .pl-rule > button {
+  .pl-rule > div {
     grid-column: 1 / -1;
-  }
-  .pl-rule > button {
-    justify-self: start;
   }
 }
 @container paper-lens (max-width:320px) {
@@ -429,9 +453,6 @@
 .pl-body details > summary + h3 {
   margin-top: 8px;
 }
-.pl-body .pl-global-title {
-  font-size: 27px;
-}
 .pl-body .pl-section-description {
   margin: 0 0 16px;
 }
@@ -447,7 +468,7 @@
 .pl-body .pl-rule-actions > button {
   width: 100%;
   min-width: 0;
-  padding: 12px 8px;
+  padding: 10px 8px;
 }
 .pl-body input[readonly] {
   background-color: #eee8df;
@@ -457,5 +478,174 @@
 @media (prefers-reduced-motion: reduce) {
   .pl-sidenav-toggle {
     transition: none;
+  }
+}
+
+/* Task-oriented workspace: shared scope, focused pages, and a clear next action. */
+.pl-body .pl-header {
+  gap: 8px;
+}
+.pl-body .pl-readiness {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex: 0 0 auto;
+  padding: 8px;
+  font-size: 12px;
+  white-space: nowrap;
+  color: #5c4033;
+  background: #f3eee5;
+  border-color: #ded6cb;
+  border-radius: 19px 15px 20px 16px;
+}
+.pl-readiness-dot {
+  width: 9px;
+  height: 10px;
+  flex: 0 0 auto;
+  border-radius: 55% 45% 48% 52%;
+  background: #ac8640;
+}
+.pl-readiness[data-state='ready'] .pl-readiness-dot {
+  background: #637e4f;
+}
+.pl-readiness[data-state='disconnected'] .pl-readiness-dot {
+  background: #b26051;
+}
+.pl-body .pl-heading {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.pl-body .pl-brand-icon {
+  width: 42px;
+  height: 42px;
+  margin: 0;
+}
+.pl-body .pl-heading h2 {
+  font-size: 26px;
+}
+.pl-body .pl-intro {
+  margin: 8px 0 20px;
+}
+.pl-scope {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0 8px;
+  border-top: 1px solid var(--pl-line);
+  border-bottom: 1px solid var(--pl-line);
+  padding: 8px 0;
+}
+.pl-scope > label:first-child,
+.pl-scope > p {
+  grid-column: 1 / -1;
+}
+.pl-body .pl-scope > label:first-child {
+  margin: 4px 0 8px;
+}
+.pl-body .pl-scope .pl-check {
+  margin: 0;
+}
+.pl-body .pl-scope > p {
+  margin: 4px 0;
+  font-size: 12px;
+}
+.pl-body .pl-text-button {
+  background: transparent;
+  border-color: transparent;
+  padding: 8px 12px;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+.pl-body .pl-overview {
+  color: var(--pl-olive);
+  font-size: 12px;
+  margin: 14px 0;
+}
+.pl-workspace-nav {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 4px;
+  padding: 4px;
+  background: #ece7df;
+  border-radius: 23px 19px 24px 20px;
+}
+.pl-body .pl-workspace-nav button {
+  padding: 10px 4px;
+  border-color: transparent;
+  background: transparent;
+  font-size: 13px;
+  min-width: 0;
+}
+.pl-body .pl-workspace-nav button[aria-pressed='true'] {
+  background: var(--pl-brown);
+  color: var(--pl-cream);
+}
+.pl-body .pl-workspace-nav button[aria-pressed='true']:hover {
+  background: var(--pl-olive);
+}
+.pl-next-step {
+  padding: 12px 14px;
+  margin-top: 16px;
+  background: #edf0e6;
+  border-radius: 20px 17px 23px 18px;
+}
+.pl-body .pl-next-step p {
+  margin: 0;
+  font-size: 13px;
+  color: #384830;
+}
+.pl-body .pl-next-step button {
+  margin-top: 4px;
+  padding-inline: 0;
+  text-align: left;
+}
+.pl-body .pl-status {
+  background: #f4e9d9;
+  color: #5c4033;
+  border-radius: 15px 18px 13px 17px;
+  padding: 12px;
+}
+.pl-body .pl-page > details {
+  padding: 20px;
+  margin-top: 16px;
+}
+.pl-body .pl-page > details > summary {
+  font-size: 20px;
+}
+.pl-body .pl-page > details[open] > summary {
+  margin-bottom: 12px;
+}
+.pl-body .pl-global-title,
+.pl-body .pl-condition-title {
+  font-size: 21px;
+}
+.pl-filter-heading {
+  margin-top: 20px;
+}
+.pl-body .pl-filter-heading .pl-condition-title {
+  margin: 0;
+}
+.pl-body .pl-filter-heading .pl-section-description {
+  margin: 6px 0 12px;
+}
+.pl-body .pl-page > .pl-text-button {
+  width: 100%;
+  margin-top: 16px;
+}
+.pl-body .pl-dev-note {
+  margin: 8px 0;
+  color: #5c4033;
+  font-size: 12px;
+}
+@container paper-lens (max-width: 320px) {
+  .pl-body .pl-page > details {
+    padding: 18px 14px;
+  }
+  .pl-body .pl-heading h2 {
+    font-size: 24px;
+  }
+  .pl-body .pl-scope .pl-check {
+    font-size: 12px;
+    gap: 8px;
   }
 }

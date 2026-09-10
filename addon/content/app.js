@@ -10,7 +10,7 @@
       this.data = { version: 1, records: {} };
       this.busy = false;
       this.stopped = false;
-      this.message = '先建立元数据索引，再生成双语关键词或搜索。';
+      this.message = '';
       this.pending = false;
       this.timer = null;
       this.path = root.PathUtils.join(Z.DataDirectory.dir, 'paper-lens', 'index.json');
@@ -63,7 +63,7 @@
             if (this.busy || this.get('auto', false)) {
               this.pending = true;
               this.schedule();
-            } else this.status('文库已变化，可点击“更新元数据”刷新索引。');
+            } else this.status('文库已变化。到“准备文库”点击“读取 / 更新文献”，即可更新本地信息。');
           },
         },
         ['item', 'collection', 'collection-item'],
@@ -72,6 +72,18 @@
       if (this.get('auto', false)) {
         this.pending = true;
         this.schedule();
+      }
+      // Migrate only tags for which this plugin has an ownership receipt.
+      if (
+        this.get('native', false) &&
+        Object.values(this.data.records).some((record) =>
+          record.ownedTags?.some((tag) => tag.startsWith('PaperLens/')),
+        )
+      ) {
+        await this.run(async () => {
+          await this.syncTags();
+          this.status('原生标签格式已更新。');
+        });
       }
     }
     attach(win) {
@@ -310,7 +322,9 @@
         en: { region: 'Study region', subject: 'Research subject', method: 'Research method' },
       };
       return ['zh', 'en'].flatMap((l) =>
-        C.categories.flatMap((k) => r.labels[l][k].map((w) => `PaperLens/${names[l][k]}: ${w}`)),
+        C.categories.flatMap((k) =>
+          r.labels[l][k].map((w) => (l === 'zh' ? `${names[l][k]}：${w}` : `${names[l][k]}: ${w}`)),
+        ),
       );
     }
     async syncTags(remove = false) {

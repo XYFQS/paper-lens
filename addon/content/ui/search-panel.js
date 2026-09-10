@@ -6,36 +6,35 @@
     mountSearch() {
       this.finder = this.section('检索文献', true);
       const finder = this.finder;
-      this.subheading(finder, '检索范围', '索引、AI 分析与搜索共用此范围。');
-      this.scopeSelect = this.select(finder, '文献范围', [['', '整个个人文库']]);
-      const refresh = this.button('刷新分类列表', () => this.collections());
-      refresh.className = 'pl-quiet';
-      finder.append(refresh);
-      this.recursive = this.field(finder, '包含子分类', 'input', { type: 'checkbox' });
-      this.recursive.parentElement.className = 'pl-check';
-
-      this.subheading(
-        finder,
-        '全局搜索',
-        '搜索所选范围的全部元数据与中英双语关键词。',
-        'pl-global-title',
-      );
-      this.query = this.field(finder, '搜索元数据与双语关键词', 'input', {
+      this.subheading(finder, '全局搜索', '', 'pl-global-title');
+      this.query = this.field(finder, '搜索内容', 'input', {
         type: 'search',
-        placeholder: '例如：中国 植被 / China vegetation',
+        placeholder: '例如：中国 植被（空格分隔）',
       });
-      this.subheading(finder, '条件筛选', '按条目类型、研究区域、研究对象或研究方法缩小范围。');
-      this.mode = this.select(finder, '条件关系', [
-        ['all', '满足全部条件（AND）'],
-        ['any', '满足任一条件（OR）'],
+      const filterHeading = this.el('div', undefined, { class: 'pl-filter-heading' });
+      this.subheading(
+        filterHeading,
+        '条件搜索',
+        '按条目类型、研究区域、对象或方法筛选。',
+        'pl-condition-title',
+      );
+      this.filterPanel = this.el('div', undefined, { id: 'pl-filters' });
+      finder.append(filterHeading, this.filterPanel);
+      this.addCondition = this.button('添加条件', () => this.addRule());
+      this.removeCondition = this.button('移除此条件', () => this.removeRule());
+      this.removeCondition.title = '移除最后添加的条件';
+      const actions = this.el('div', undefined, { class: 'pl-rule-actions' });
+      actions.append(this.addCondition, this.removeCondition);
+      this.filterPanel.append(actions);
+      this.mode = this.select(this.filterPanel, '条件关系', [
+        ['all', '全部满足'],
+        ['any', '任一满足'],
       ]);
       this.rules = this.el('div');
-      finder.append(this.rules);
-      this.emptyAdd = this.button('添加条件', () => this.addRule());
-      finder.append(this.emptyAdd);
-      this.addRule();
+      this.filterPanel.append(this.rules);
+      this.updateSearchControls();
 
-      const search = this.button('在主列表显示结果', () =>
+      const search = this.button('搜索文献', () =>
         this.app.search(
           this.scope(),
           this.query.value,
@@ -46,6 +45,7 @@
       );
       search.className = 'primary pl-search-submit';
       finder.append(search);
+      finder.append(this.el('p', '结果显示在 Zotero 主列表。', { class: 'muted' }));
       this.query.addEventListener('keydown', (event) => {
         if (event.key === 'Enter') {
           event.preventDefault();
@@ -85,17 +85,20 @@
       update();
       const entry = { box, read: () => ({ field: field.value, op: op.value, value: value.value }) };
       this.rows.push(entry);
-      const add = this.button('添加条件', () => this.addRule());
-      const remove = this.button('移除此条件', () => {
-        this.rows = this.rows.filter((row) => row !== entry);
-        box.remove();
-        this.emptyAdd.hidden = this.rows.length > 0;
-      });
-      const actions = this.el('div', undefined, { class: 'pl-rule-actions' });
-      actions.append(add, remove);
-      box.append(actions);
       this.rules.append(box);
-      this.emptyAdd.hidden = true;
+      this.updateSearchControls();
+    },
+
+    removeRule() {
+      const entry = this.rows.pop();
+      if (!entry) return;
+      entry.box.remove();
+      this.updateSearchControls();
+    },
+
+    updateSearchControls() {
+      this.mode.parentElement.hidden = this.rows.length < 2;
+      this.removeCondition.disabled = this.app.busy || this.rows.length === 0;
     },
 
     ruleValues() {
