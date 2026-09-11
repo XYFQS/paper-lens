@@ -193,6 +193,16 @@ var runNative = async function () {
     !view.panel.hidden && nav.getAttribute('aria-pressed') === 'true',
     'native rail button reopens sidebar',
   );
+  view.itemPane.setAttribute('collapsed', 'true');
+  await Z.Promise.delay(0);
+  assert(view.panel.hidden, 'collapsing native item pane hides plugin sidebar');
+  view.itemPane.removeAttribute('collapsed');
+  await Z.Promise.delay(0);
+  assert(!view.panel.hidden, 'expanding native item pane restores plugin sidebar');
+  nav.click();
+  assert(view.panel.hidden, 'rail button still hides sidebar after native pane changes');
+  nav.click();
+  assert(!view.panel.hidden, 'rail button still reopens sidebar after native pane changes');
   assert(
     view.finder.localName === 'details' && view.finder.open,
     'search module is collapsible and initially open',

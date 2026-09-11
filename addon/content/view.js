@@ -9,6 +9,7 @@
       this.doc = win.document;
       this.rows = [];
       this.locked = [];
+      this.userHidden = false;
     }
     el(tag, text, attrs = {}) {
       const e = this.doc.createElementNS(NS, tag);
@@ -115,6 +116,7 @@
         }),
       );
       this.navigation = new root.LensSidebarToggle(this);
+      this.watchItemPane();
       this.collections();
       this.render();
     }
@@ -138,10 +140,37 @@
       if (description)
         parent.append(this.el('p', description, { class: 'muted pl-section-description' }));
     }
-    toggle() {
-      this.panel.hidden = !this.panel.hidden;
-      this.split.hidden = this.panel.hidden;
+    // Zotero marks a collapsed pane with collapsed="true" and removes the attribute to expand,
+    // so presence alone never means collapsed.
+    itemPaneCollapsed() {
+      return this.itemPane?.getAttribute('collapsed') === 'true';
+    }
+    applyVisibility() {
+      const hidden = this.userHidden || this.itemPaneCollapsed();
+      this.panel.hidden = hidden;
+      this.split.hidden = hidden;
       this.navigation?.update();
+    }
+    watchItemPane() {
+      this.itemPane = this.doc.getElementById('zotero-item-pane');
+      if (!this.itemPane) return;
+      this.itemPaneObserver = new this.win.MutationObserver(() => this.applyVisibility());
+      this.itemPaneObserver.observe(this.itemPane, {
+        attributes: true,
+        attributeFilter: ['collapsed'],
+      });
+      this.applyVisibility();
+    }
+    toggle() {
+      // Match Zotero's own pane buttons: clicking while collapsed expands the pane.
+      if (this.itemPaneCollapsed()) {
+        this.userHidden = false;
+        this.itemPane.collapsed = false;
+        this.applyVisibility();
+        return;
+      }
+      this.userHidden = !this.userHidden;
+      this.applyVisibility();
     }
     scope() {
       return { collection: this.scopeSelect.value, recursive: this.recursive.checked };
@@ -206,6 +235,7 @@
       this.cancel.hidden = !this.app.token;
     }
     destroy() {
+      this.itemPaneObserver?.disconnect();
       this.navigation?.destroy();
       this.panel?.remove();
       this.split?.remove();
