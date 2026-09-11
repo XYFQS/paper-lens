@@ -27,8 +27,9 @@ fs.writeFileSync(
     .map(([k, v]) => `user_pref(${JSON.stringify(k)},${JSON.stringify(v)});`)
     .join('\n'),
 );
+const manifest = JSON.parse(fs.readFileSync(path.join(base, 'addon/manifest.json'), 'utf8'));
 fs.copyFileSync(
-  path.join(base, 'dist/paper-lens-1.0.0.xpi'),
+  path.join(base, `dist/paper-lens-${manifest.version}.xpi`),
   path.join(info.profile, 'extensions/paper-lens@local.zotero.xpi'),
 );
 fs.writeFileSync(
