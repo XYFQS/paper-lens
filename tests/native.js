@@ -203,6 +203,27 @@ var runNative = async function () {
   assert(view.panel.hidden, 'rail button still hides sidebar after native pane changes');
   nav.click();
   assert(!view.panel.hidden, 'rail button still reopens sidebar after native pane changes');
+  // Reader and note tabs collapse the context pane instead of the item pane.
+  // Zotero_Tabs.selectedType is a non-configurable getter and the isolated profile has no
+  // reader tab, so force the reader branch to reach the context pane path.
+  const usesContextPane = view.usesContextPane;
+  view.usesContextPane = () => true;
+  win.ZoteroContextPane.collapsed = true;
+  await Z.Promise.delay(0);
+  assert(view.panel.hidden, 'collapsing reader context pane hides plugin sidebar');
+  win.ZoteroContextPane.collapsed = false;
+  await Z.Promise.delay(0);
+  assert(!view.panel.hidden, 'expanding reader context pane restores plugin sidebar');
+  win.ZoteroContextPane.collapsed = true;
+  await Z.Promise.delay(0);
+  assert(view.panel.hidden, 'reader context pane collapse hides sidebar again');
+  nav.click();
+  assert(
+    !view.panel.hidden && !win.ZoteroContextPane.collapsed,
+    'rail button expands collapsed context pane and shows sidebar',
+  );
+  view.usesContextPane = usesContextPane;
+  win.ZoteroContextPane.collapsed = true;
   assert(
     view.finder.localName === 'details' && view.finder.open,
     'search module is collapsible and initially open',

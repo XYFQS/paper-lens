@@ -1,7 +1,7 @@
 {
   "manifest_version": 2,
   "name": "文献透镜 · Paper Lens",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "双语研究关键词与本地条件检索",
   "author": "PPTom",
   "applications": {

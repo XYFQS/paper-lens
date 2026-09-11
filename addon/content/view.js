@@ -116,7 +116,7 @@
         }),
       );
       this.navigation = new root.LensSidebarToggle(this);
-      this.watchItemPane();
+      this.watchPanes();
       this.collections();
       this.render();
     }
@@ -145,27 +145,54 @@
     itemPaneCollapsed() {
       return this.itemPane?.getAttribute('collapsed') === 'true';
     }
+    // Library tabs drive #zotero-item-pane. Reader and note tabs drive the context pane
+    // instead, and that one stays collapsed="true" the whole time a library tab is selected,
+    // so it is only a usable signal while a non-library tab is showing.
+    usesContextPane() {
+      return this.win.Zotero_Tabs?.selectedType !== 'library';
+    }
+    activePaneCollapsed() {
+      return this.usesContextPane()
+        ? !!this.win.ZoteroContextPane?.collapsed
+        : this.itemPaneCollapsed();
+    }
     applyVisibility() {
-      const hidden = this.userHidden || this.itemPaneCollapsed();
+      const hidden = this.userHidden || this.activePaneCollapsed();
       this.panel.hidden = hidden;
       this.split.hidden = hidden;
       this.navigation?.update();
     }
-    watchItemPane() {
+    watchPanes() {
       this.itemPane = this.doc.getElementById('zotero-item-pane');
-      if (!this.itemPane) return;
-      this.itemPaneObserver = new this.win.MutationObserver(() => this.applyVisibility());
-      this.itemPaneObserver.observe(this.itemPane, {
-        attributes: true,
-        attributeFilter: ['collapsed'],
-      });
+      this.paneObserver = new this.win.MutationObserver(() => this.applyVisibility());
+      // Collapsing the context pane updates its splitters, not the pane box on its own.
+      for (const [node, attributeFilter] of [
+        [this.itemPane, ['collapsed']],
+        [this.doc.getElementById('zotero-context-pane'), ['collapsed']],
+        [this.doc.getElementById('zotero-context-splitter'), ['state', 'hidden']],
+        [this.doc.getElementById('zotero-context-splitter-stacked'), ['state', 'hidden']],
+      ]) {
+        if (node) this.paneObserver.observe(node, { attributes: true, attributeFilter });
+      }
+      // Zotero_Tabs.select() is the only signal for a library/reader switch.
+      this.tabObserverID = Z.Notifier.registerObserver(this, ['tab']);
       this.applyVisibility();
+    }
+    notify(event) {
+      if (event === 'select') this.applyVisibility();
+    }
+    expandActivePane() {
+      if (this.usesContextPane()) {
+        if (this.win.ZoteroContextPane) this.win.ZoteroContextPane.collapsed = false;
+      } else if (this.itemPane) {
+        this.itemPane.collapsed = false;
+      }
     }
     toggle() {
       // Match Zotero's own pane buttons: clicking while collapsed expands the pane.
-      if (this.itemPaneCollapsed()) {
+      if (this.activePaneCollapsed()) {
         this.userHidden = false;
-        this.itemPane.collapsed = false;
+        this.expandActivePane();
         this.applyVisibility();
         return;
       }
@@ -235,7 +262,8 @@
       this.cancel.hidden = !this.app.token;
     }
     destroy() {
-      this.itemPaneObserver?.disconnect();
+      this.paneObserver?.disconnect();
+      if (this.tabObserverID) Z.Notifier.unregisterObserver(this.tabObserverID);
       this.navigation?.destroy();
       this.panel?.remove();
       this.split?.remove();

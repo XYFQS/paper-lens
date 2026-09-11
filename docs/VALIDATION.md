@@ -5,9 +5,10 @@
 ## 自动化验证
 
 - `node --test tests/*.test.cjs`：8 项通过，覆盖中英搜索、AND/OR、否定条件、模型输出校验、空关键词、元数据处理和 API 地址。
-- `powershell -NoProfile -ExecutionPolicy Bypass -File scripts/test-native.ps1`：62 项通过，使用独立 Zotero 配置与独立测试数据库、6 篇合成条目及父子分类。
+- `powershell -NoProfile -ExecutionPolicy Bypass -File scripts/test-native.ps1`：66 项通过，使用独立 Zotero 配置与独立测试数据库、6 篇合成条目及父子分类。
 - 新增检查覆盖文库与阅读器导航按钮、显示/隐藏切换、可折叠搜索、标题与自定义图标、成对条件按钮，以及 API 保存锁定、固定掩码、编辑与取消修改、留空保留密钥。
 - 2026-09-11 复跑：侧栏可见性改为跟随原生 item pane 的 `collapsed` 属性。原生侧栏收起时插件面板与分隔条完全隐藏，展开时恢复；导航按钮在收起状态下点击会先展开原生侧栏，之后仍可独立隐藏与恢复插件。
+- 2026-09-11 补充：阅读器与笔记标签页用的是 context pane（`#zotero-context-pane`），不是 item pane。可见性改为按 `Zotero_Tabs.selectedType` 判断当前标签页该跟随哪一个，并监听 context pane 的分隔条 `state`；标签页切换通过 `Zotero.Notifier` 的 `tab` select 事件同步。两个面板的收起状态、以及导航按钮在两种上下文下的展开行为均有断言覆盖。
 - 在 280、380、600 像素侧栏宽度下验证条件按钮同排等宽等高，侧栏无横向溢出。
 - 新的功能分区验证：首次进入“准备文库”、范围在页面间共用、条件搜索直接显示，无展开或收起按钮。
 - 条件行默认零条，点击添加才创建条件，移除按钮删除最后添加的一条；空状态下移除按钮置灰。两条及以上条件才显示组合关系。

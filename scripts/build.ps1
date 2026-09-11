@@ -8,6 +8,11 @@ $lensManifest = Get-Content -LiteralPath $manifestPath -Raw -Encoding UTF8 | Con
 $lensDist = Join-Path $lensRoot 'dist'
 New-Item -ItemType Directory -Force -Path $lensDist | Out-Null
 
+# Drop packages from earlier versions so an outdated build cannot be uploaded by mistake.
+Get-ChildItem -LiteralPath $lensDist -File |
+    Where-Object { $_.Name -match '^paper-lens-.*\.(xpi|zip)$' } |
+    Remove-Item -Force
+
 function Write-LensZip($Destination, $Entries) {
     $stream = [IO.File]::Open($Destination, [IO.FileMode]::Create)
     $zip = [IO.Compression.ZipArchive]::new($stream, [IO.Compression.ZipArchiveMode]::Create)
