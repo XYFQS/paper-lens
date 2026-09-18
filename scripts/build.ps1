@@ -53,8 +53,8 @@ foreach ($directory in @('addon', 'scripts', 'tests', 'docs')) {
     }
 }
 $rootFiles = @(
-    'README.md', 'LICENSE', 'package.json', '.gitignore',
-    '.prettierrc.json', '.prettierignore', '.editorconfig', '.vscode/tasks.json'
+    'README.md', 'CHANGELOG.md', 'LICENSE', 'package.json', 'package-lock.json',
+    '.gitignore', '.prettierrc.json', '.prettierignore', '.editorconfig', '.vscode/tasks.json'
 )
 foreach ($name in $rootFiles) {
     $source += @{ Path = (Join-Path $lensRoot $name); Name = $name }

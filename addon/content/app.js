@@ -2,14 +2,24 @@
   'use strict';
   const Z = root.Zotero,
     C = root.LensCore,
+    S = root.LensStore,
     PREFIX = 'extensions.zotero.paperLens.';
+  // Only the file system is injected into the store, so migration and serialisation
+  // stay testable in Node without Zotero.
+  const io = {
+    exists: (path) => root.IOUtils.exists(path),
+    readUTF8: (path) => root.IOUtils.readUTF8(path),
+    writeUTF8: (path, text, options) => root.IOUtils.writeUTF8(path, text, options),
+    makeDirectory: (path) => root.IOUtils.makeDirectory(path, { ignoreExisting: true }),
+  };
   class App {
     constructor(uri) {
       this.uri = uri;
       this.views = new Map();
-      this.data = { version: 1, records: {} };
+      this.data = S.empty();
       this.busy = false;
       this.stopped = false;
+      this.migrated = false;
       this.message = '';
       this.pending = false;
       this.timer = null;
@@ -37,23 +47,29 @@
       return encrypted ? sdr.decryptString(encrypted) : '';
     }
     async save() {
-      await root.IOUtils.makeDirectory(root.PathUtils.parent(this.path), { ignoreExisting: true });
-      await root.IOUtils.writeUTF8(this.path, JSON.stringify(this.data), {
-        tmpPath: this.path + '.tmp',
-      });
+      await S.save(this.path, this.data, io);
+    }
+    /**
+     * Read the index and upgrade a v1 file. Nothing is assigned until the read has
+     * succeeded, so a corrupt file leaves the in-memory index exactly as it was.
+     */
+    async loadIndex() {
+      const { data, migrated } = await S.load(this.path, io);
+      this.data = data;
+      this.migrated = migrated;
+      for (const r of Object.values(this.data.records)) r.searchText = C.textIndex(r);
+      return { migrated };
     }
     async start() {
       await Z.Libraries.get(Z.Libraries.userLibraryID).waitForDataLoad('item');
       try {
-        if (await root.IOUtils.exists(this.path)) {
-          const data = JSON.parse(await root.IOUtils.readUTF8(this.path));
-          if (data.version !== 1 || !data.records || typeof data.records !== 'object')
-            throw Error('索引格式不支持');
-          this.data = data;
-          for (const r of Object.values(data.records)) r.searchText = C.textIndex(r);
-        }
+        await this.loadIndex();
       } catch (e) {
         this.cacheError = true;
+        // Keep a copy of whatever was there so rebuilding the cache cannot destroy it.
+        try {
+          await S.quarantine(this.path, io);
+        } catch (_) {}
         this.status('缓存无法读取，点击“重建缓存”重新生成。');
       }
       for (const win of Z.getMainWindows()) this.attach(win);
@@ -63,7 +79,7 @@
             if (this.busy || this.get('auto', false)) {
               this.pending = true;
               this.schedule();
-            } else this.status('文库已变化。到“准备文库”点击“读取 / 更新文献”，即可更新本地信息。');
+            } else this.status('文库已变化。到“文库”点击“读取 / 更新文献”，即可更新本地信息。');
           },
         },
         ['item', 'collection', 'collection-item'],
@@ -73,16 +89,12 @@
         this.pending = true;
         this.schedule();
       }
-      // Migrate only tags for which this plugin has an ownership receipt.
-      if (
-        this.get('native', false) &&
-        Object.values(this.data.records).some((record) =>
-          record.ownedTags?.some((tag) => tag.startsWith('PaperLens/')),
-        )
-      ) {
+      // A library upgraded from an older version still carries Chinese/English tag
+      // names. Rewrite them once, and only ever the tags this plugin owns.
+      if (this.get('native', false) && this.staleTags()) {
         await this.run(async () => {
           await this.syncTags();
-          this.status('原生标签格式已更新。');
+          this.status('原生标签已更新为英文规范标签。');
         });
       }
     }
@@ -165,23 +177,28 @@
       for (const item of items) {
         const metadata = await this.read(item),
           fingerprint = JSON.stringify(metadata),
+          fullMetadata = { ...metadata, key: item.key, dateModified: item.dateModified },
           old = this.data.records[item.key];
-        const fullMetadata = { ...metadata, key: item.key, dateModified: item.dateModified };
-        if (!old || old.fingerprint !== fingerprint) {
-          // Keep ownership receipts even after metadata changes so optional native tags can be removed safely.
-          const record = {
+        if (!old) {
+          const record = S.shape({
             id: item.id,
             key: item.key,
             metadata: fullMetadata,
             fingerprint,
-            labels: null,
-            ownedTags: old?.ownedTags ?? [],
-            updatedAt: new Date().toISOString(),
-          };
+          });
           record.searchText = C.textIndex(record);
           this.data.records[item.key] = record;
           changed++;
-        } else old.metadata = fullMetadata;
+          continue;
+        }
+        // Changed metadata keeps the existing profile, the user's workflow fields and
+        // the ownership receipts. Only the fingerprint moves, which marks the profile
+        // stale so the next AI run refreshes it instead of discarding it now.
+        if (old.fingerprint !== fingerprint) changed++;
+        old.id = item.id;
+        old.metadata = fullMetadata;
+        old.fingerprint = fingerprint;
+        old.searchText = C.textIndex(old);
       }
       const alive = new Set(
         (await Z.Items.getAll(Z.Libraries.userLibraryID, true, false))
@@ -206,13 +223,15 @@
       const body = {
         model,
         stream: false,
-        max_tokens: 6000,
+        max_tokens: 8000,
         messages: [
           { role: 'system', content: C.prompt },
           {
             role: 'user',
+            // aiInput allowlists bibliographic fields. Attachments, note bodies and
+            // local paths are never sent.
             content: JSON.stringify({
-              items: records.map((r) => ({ key: r.key, metadata: r.metadata })),
+              items: records.map((r) => C.aiInput(r)),
               ...(correction ? { correction } : {}),
             }),
           },
@@ -261,7 +280,9 @@
     async analyze(options = {}, force = false) {
       if (!this.secret()) throw Error('请先保存 API Key。');
       const items = await this.update(options),
-        todo = items.map((i) => this.data.records[i.key]).filter((r) => force || !r.labels);
+        todo = items
+          .map((i) => this.data.records[i.key])
+          .filter((r) => r && (force || S.needsAnalysis(r)));
       const token = { cancelled: false };
       this.token = token;
       let done = 0;
@@ -278,7 +299,7 @@
           size += length;
           offset++;
         }
-        this.status(`AI 双语关键词：${done}/${todo.length} 篇 · 每批最多 5 篇`);
+        this.status(`AI 研究画像：${done}/${todo.length} 篇 · 每批最多 5 篇`);
         let result, correction;
         for (let attempt = 0; attempt < 3; attempt++) {
           const raw = await this.request(batch, token, correction);
@@ -303,9 +324,16 @@
             stale++;
             continue;
           }
-          r.labels = entry.labels;
-          r.aiModel = this.get('model', 'deepseek-v4-flash');
-          r.aiAt = new Date().toISOString();
+          // Replace the machine profile only. workflow and manual are the user's and
+          // are never written here.
+          r.analysis = {
+            status: 'complete',
+            keywords: entry.keywords,
+            findings: entry.findings,
+            aiModel: this.get('model', 'deepseek-v4-flash'),
+            aiAt: new Date().toISOString(),
+            sourceFingerprint: r.fingerprint,
+          };
           r.searchText = C.textIndex(r);
           done++;
         }
@@ -313,26 +341,78 @@
         if (this.get('native', false)) await this.syncTags();
         if (stale) throw Error('分析期间部分条目已变化；已跳过变化条目，请更新后继续生成。');
       }
-      this.status(`已完成 ${done} 篇中英双语关键词；已有关键词的条目已跳过。`);
+      this.status(`已完成 ${done} 篇研究画像；已是最新的条目已跳过。`);
     }
-    desiredTags(r) {
-      if (!r.labels) return [];
-      const names = {
-        zh: { region: '研究区域', subject: '研究对象', method: '研究方法' },
-        en: { region: 'Study region', subject: 'Research subject', method: 'Research method' },
+    record(key) {
+      return this.data.records[key] ?? null;
+    }
+    stale(key) {
+      const record = this.data.records[key];
+      return record ? S.needsAnalysis(record) : false;
+    }
+    stats() {
+      const records = Object.values(this.data.records);
+      return {
+        total: records.length,
+        analyzed: records.filter((r) => r.analysis?.status === 'complete').length,
+        legacy: records.filter((r) => r.analysis?.status === 'legacy-partial').length,
+        stale: records.filter((r) => r.analysis && S.needsAnalysis(r)).length,
       };
-      return ['zh', 'en'].flatMap((l) =>
-        C.categories.flatMap((k) =>
-          r.labels[l][k].map((w) => (l === 'zh' ? `${names[l][k]}：${w}` : `${names[l][k]}: ${w}`)),
-        ),
-      );
     }
+    /** Every write the UI makes goes through here, so the index is never touched directly. */
+    async edit(key, mutate) {
+      const record = this.data.records[key];
+      if (!record) throw Error('该条目尚未建立本地索引。');
+      mutate(record);
+      record.updatedAt = new Date().toISOString();
+      record.searchText = C.textIndex(record);
+      await this.save();
+      if (this.get('native', false)) await this.syncTags();
+      this.status('已保存。');
+      return record;
+    }
+    setWorkflow(key, patch) {
+      return this.edit(key, (r) => {
+        r.workflow = C.workflow({ workflow: { ...r.workflow, ...patch } });
+      });
+    }
+    /** An empty text restores the automatic sentence instead of storing a blank one. */
+    setMemorySentence(key, text) {
+      return this.edit(key, (r) => {
+        r.workflow = {
+          ...C.workflow(r),
+          memorySentenceOverride: String(text ?? '').trim() || null,
+        };
+      });
+    }
+    correctKeyword(key, kind, change) {
+      return this.edit(key, (r) => {
+        r.manual = C.correct(r.manual, kind, change);
+      });
+    }
+    resetKeywordCorrections(key, kind) {
+      return this.edit(key, (r) => {
+        r.manual = C.resetCorrections(r.manual, kind);
+      });
+    }
+    staleTags() {
+      return Object.values(this.data.records).some((r) => {
+        const wanted = C.tagNames(r);
+        return (r.ownedTags ?? []).some((t) => !wanted.includes(t));
+      });
+    }
+    /**
+     * One canonical English tag per keyword, e.g. R::China. Both the old Chinese and
+     * English names and the older PaperLens/ scheme are removed here, but only for
+     * tags this plugin recorded as its own: a tag the user created by hand is never
+     * touched, even when its name matches.
+     */
     async syncTags(remove = false) {
       for (const r of Object.values(this.data.records)) {
         const item = await Z.Items.getByLibraryAndKeyAsync(Z.Libraries.userLibraryID, r.key);
         if (!item || item.deleted) continue;
         await item.loadAllData();
-        const wanted = remove ? [] : this.desiredTags(r),
+        const wanted = remove ? [] : C.tagNames(r),
           existing = new Set(item.getTags().map((t) => t.tag)),
           old = r.ownedTags ?? [];
         const added = wanted.filter((t) => !existing.has(t)),

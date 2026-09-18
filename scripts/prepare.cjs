@@ -56,9 +56,11 @@ fs.writeFileSync(
     try {
       await Zotero.initializationPromise;
       const scope = {
-        Zotero, IOUtils, PathUtils,
+        Zotero, IOUtils, PathUtils, Services,
         expected: ${JSON.stringify(info.data)},
         output,
+        // The repository itself, so the native test can load the pure modules.
+        lensBase: ${JSON.stringify(url.pathToFileURL(base).href + '/')},
       };
       Services.scriptloader.loadSubScript(
         ${JSON.stringify(url.pathToFileURL(path.join(base, 'tests/native.js')).href)},

@@ -9,11 +9,17 @@
       update.className = 'pl-library-action pl-action-sand';
       this.indexSection.append(update);
 
-      this.aiSection = this.section('2 · 生成研究关键词', true);
+      this.aiSection = this.section('2 · 生成研究画像', true);
       this.aiSection.append(
-        this.el('p', '区域、对象、方法：中英双语，每类最多 5 个词。', { class: 'muted' }),
+        this.el(
+          'p',
+          '主题、区域、对象、方法、数据来源、指标变量：中英配对，每类最多 5 个；结论最多 3 条。',
+          {
+            class: 'muted',
+          },
+        ),
       );
-      this.generate = this.button('生成研究关键词', async () => {
+      this.generate = this.button('生成研究画像', async () => {
         if (!this.app.get('secret', '')) {
           this.selectPage('settings');
           this.apiSection.open = true;
@@ -23,13 +29,15 @@
         await this.app.analyze(this.scope());
       });
       this.generate.className = 'pl-library-action pl-action-sage';
-      this.generate.title = '仅处理缺失关键词，可中断后继续';
+      this.generate.title = '只处理尚未生成或文献信息已变化的条目，可中断后继续';
       this.cancel = this.el('button', '停止生成', { type: 'button' });
       this.cancel.addEventListener('click', () => this.app.cancel());
       this.aiSection.append(
         this.generate,
         this.cancel,
-        this.el('p', '元数据将发送至 API，可能计费。', { class: 'muted' }),
+        this.el('p', '只发送题录字段，不发送 PDF、附件与笔记内容。调用可能计费。', {
+          class: 'muted',
+        }),
       );
       const goSearch = this.el('button', '去找文献', {
         type: 'button',
@@ -59,7 +67,7 @@
       );
       this.native = this.select(settings, '标签保存位置', [
         ['private', '仅插件'],
-        ['native', '插件 + Zotero 双语标签'],
+        ['native', '插件 + Zotero 原生标签'],
       ]);
       this.native.value = this.app.get('native', false) ? 'native' : 'private';
       settings.append(
@@ -69,15 +77,17 @@
           await this.app.syncTags(!enabled);
           this.app.status(
             enabled
-              ? '研究关键词已同步到 Zotero 原生标签。'
+              ? '已同步英文规范标签（T:: 主题、R:: 区域、O:: 对象、M:: 方法、D:: 数据、V:: 变量）。'
               : '关键词仅保存在插件中；已移除本插件添加的原生标签。',
           );
         }),
       );
       settings.append(
-        this.el('p', '切回仅插件时，只移除插件添加的原生标签。', {
-          class: 'muted',
-        }),
+        this.el(
+          'p',
+          '原生标签只写英文规范名（如 R::China），不会中英各写一套；判定为自动标签，可在 Zotero 标签栏中隐藏。切回仅插件时只移除本插件添加的标签，不会动你手工建立的同名标签。',
+          { class: 'muted' },
+        ),
       );
 
       const maintenance = this.section('维护工具', false);
@@ -85,13 +95,13 @@
       maintenance.append(
         this.row(
           this.button('重建缓存', () => this.app.update({}, true)),
-          this.button('重新生成全部关键词', async () => {
+          this.button('重新生成全部画像', async () => {
             await this.app.analyze(this.scope(), true);
           }),
         ),
       );
       maintenance.append(
-        this.el('p', '重建：整个文库。重新生成：当前范围，再次调用 API。', {
+        this.el('p', '重建：只读取元数据，整个文库。重新生成：当前范围，再次调用 API。', {
           class: 'muted',
         }),
       );

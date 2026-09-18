@@ -46,7 +46,7 @@ $config = @{
     watch = -not $NoWatch
 }
 [IO.File]::WriteAllText((Join-Path $loader 'config.json'), ($config | ConvertTo-Json), $utf8)
-$addonManifest = Get-Content -LiteralPath (Join-Path $lensRoot 'addon/manifest.json') -Raw | ConvertFrom-Json
+$addonManifest = Get-Content -LiteralPath (Join-Path $lensRoot 'addon/manifest.json') -Raw -Encoding UTF8 | ConvertFrom-Json
 $manifest = @{
     manifest_version = 2
     name = 'Paper Lens Development Preview'

@@ -26,15 +26,32 @@ try {
             RedirectStandardOutput = Join-Path $lensRoot '.test/startup.log'
             RedirectStandardError = Join-Path $lensRoot '.test/stderr.log'
         }
-        Start-Process @launchOptions | Out-Null
-        $deadline = (Get-Date).AddMinutes(2)
-        while (-not (Test-Path -LiteralPath $info.output) -and (Get-Date) -lt $deadline) {
-            Start-Sleep -Seconds 1
+        Start-Process @launchOptions
+        try {
+            $deadline = (Get-Date).AddMinutes(2)
+            while (-not (Test-Path -LiteralPath $info.output) -and (Get-Date) -lt $deadline) {
+                Start-Sleep -Seconds 1
+            }
+            if (-not (Test-Path -LiteralPath $info.output)) { throw 'Native tests timed out' }
+            $result = Get-Content -LiteralPath $info.output -Raw -Encoding UTF8 | ConvertFrom-Json
+            $result | ConvertTo-Json -Depth 5
+            if (-not $result.success) { throw 'Native tests failed' }
         }
-        if (-not (Test-Path -LiteralPath $info.output)) { throw 'Native tests timed out' }
-        $result = Get-Content -LiteralPath $info.output -Raw -Encoding UTF8 | ConvertFrom-Json
-        $result | ConvertTo-Json -Depth 5
-        if (-not $result.success) { throw 'Native tests failed' }
+        finally {
+            # A run has to take its Zotero down with it, on success as much as on failure:
+            # a leftover keeps the profile and the shared debug log busy and starves the next
+            # run past its deadline. The handle Start-Process gave back is only the launcher,
+            # which hands off to the real process, so it is not what holds the profile. Match
+            # on the profile path instead, which is this run's own throwaway directory and so
+            # can never match the Zotero the user is working in.
+            $owned = [Regex]::Escape($info.profile)
+            try {
+                Get-CimInstance Win32_Process -Filter "Name='zotero.exe'" |
+                    Where-Object { $_.CommandLine -match $owned } |
+                    ForEach-Object { taskkill /F /T /PID $_.ProcessId | Out-Null }
+            }
+            catch { }
+        }
     }
     finally {
         if ($mock -and -not $mock.HasExited) { Stop-Process -Id $mock.Id }

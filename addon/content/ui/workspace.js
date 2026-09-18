@@ -23,7 +23,7 @@
       this.pageButtons = {};
       for (const [id, label] of [
         ['search', '找文献'],
-        ['prepare', '准备文库'],
+        ['library', '文库'],
         ['settings', '设置'],
       ]) {
         const button = this.el('button', label, {
@@ -71,11 +71,10 @@
 
     renderWorkspace() {
       if (!this.overview) return;
-      const records = Object.values(this.app.data.records);
-      const complete = records.filter((record) => record.labels).length;
-      const configured = Boolean(this.app.get('secret', ''));
-      const ready =
-        configured && !this.app.cacheError && records.length > 0 && complete === records.length;
+      const stats = this.app.stats(),
+        pending = stats.total - stats.analyzed,
+        configured = Boolean(this.app.get('secret', '')),
+        ready = configured && !this.app.cacheError && stats.total > 0 && pending === 0;
       if (ready && !this.app.get('onboardingComplete', false)) {
         this.app.set('onboardingComplete', true);
       }
@@ -92,19 +91,25 @@
         label = this.app.cacheError ? '待修复' : '待生成';
         description = this.app.cacheError
           ? '本地索引异常。点击打开维护工具。'
-          : !records.length
-            ? '先读取文献信息，再生成研究关键词。'
-            : `还有 ${records.length - complete} 篇未生成关键词，点击继续准备文库。`;
-        this.readinessPage = this.app.cacheError ? 'settings' : 'prepare';
+          : !stats.total
+            ? '先读取文献信息，再生成研究画像。'
+            : `还有 ${pending} 篇未生成画像${stats.legacy ? `（其中 ${stats.legacy} 篇来自旧版本）` : ''}，点击继续。`;
+        this.readinessPage = this.app.cacheError ? 'settings' : 'library';
         this.readinessSection = this.app.cacheError
           ? 'maintenanceSection'
-          : records.length
+          : stats.total
             ? 'aiSection'
             : 'indexSection';
+      } else if (stats.stale) {
+        state = 'pending';
+        label = '待更新';
+        description = `${stats.stale} 篇的文献信息已变化，建议重新生成画像。`;
+        this.readinessPage = 'library';
+        this.readinessSection = 'aiSection';
       } else {
         state = 'ready';
         label = '已就绪';
-        description = '本地已收录文献的关键词已生成，可以开始检索。点击进入搜索。';
+        description = '文献画像已生成，可以开始检索。点击进入搜索。';
         this.readinessPage = 'search';
         this.readinessSection = 'finder';
       }
@@ -112,29 +117,39 @@
       this.readinessText.textContent = label;
       this.readiness.title = description;
       this.readiness.setAttribute('aria-label', `${label}：${description}`);
-      this.overview.textContent = `本地已收录 ${records.length} 篇 · 已有研究关键词 ${complete} 篇`;
+      this.overview.textContent = `本地已收录 ${stats.total} 篇 · 已生成画像 ${stats.analyzed} 篇${
+        stats.legacy ? ` · 旧版关键词 ${stats.legacy} 篇` : ''
+      }`;
       if (this.app.cacheError) {
         this.nextText.textContent = '索引异常，请在维护工具中重建缓存。';
         this.nextDestination = 'settings';
         this.nextSection = 'maintenanceSection';
         this.nextButton.textContent = '打开设置';
-      } else if (!records.length) {
+      } else if (!stats.total) {
         this.nextText.textContent = '先读取文献信息，即可搜索。无需 API。';
-        this.nextDestination = 'prepare';
+        this.nextDestination = 'library';
         this.nextSection = 'indexSection';
-        this.nextButton.textContent = '开始准备文库';
-      } else if (!this.app.get('secret', '') && complete < records.length) {
-        this.nextText.textContent = '已可搜索。连接模型后，可生成研究关键词。';
+        this.nextButton.textContent = '打开文库';
+      } else if (!configured && pending) {
+        this.nextText.textContent = '已可搜索。连接模型后，可生成研究画像。';
         this.nextDestination = 'settings';
         this.nextSection = 'apiSection';
         this.nextButton.textContent = '连接 AI 模型';
-      } else if (complete < records.length) {
-        this.nextText.textContent = `还有 ${records.length - complete} 篇待生成关键词。`;
-        this.nextDestination = 'prepare';
+      } else if (pending) {
+        this.nextText.textContent = `还有 ${pending} 篇待生成画像${
+          stats.legacy ? `，其中 ${stats.legacy} 篇是旧版关键词` : ''
+        }。`;
+        this.nextDestination = 'library';
         this.nextSection = 'aiSection';
-        this.nextButton.textContent = '生成研究关键词';
+        this.nextButton.textContent = '生成研究画像';
+      } else if (stats.stale) {
+        this.nextText.textContent = `${stats.stale} 篇的文献信息已变化，建议重新生成画像。`;
+        this.nextDestination = 'library';
+        this.nextSection = 'aiSection';
+        this.nextButton.textContent = '重新生成';
       } else {
-        this.nextText.textContent = '文库已准备好。输入关键词找文献，或添加条件进行组合筛选。';
+        this.nextText.textContent =
+          '文库已准备好。输入主题、区域、方法或变量找文献，也可组合条件筛选。';
         this.nextDestination = 'search';
         this.nextButton.textContent = '开始搜索';
       }

@@ -14,12 +14,14 @@ async function startup({ rootURI }) {
   };
   for (const file of [
     'core',
+    'store',
     'app',
     'ui/sidebar-toggle',
     'ui/workspace',
     'ui/library-panel',
     'ui/search-panel',
     'ui/api-panel',
+    'ui/passport-panel',
     'view',
   ])
     Services.scriptloader.loadSubScript(rootURI + 'content/' + file + '.js', scope, 'UTF-8');

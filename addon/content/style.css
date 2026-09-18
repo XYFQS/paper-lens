@@ -321,33 +321,291 @@
   padding: 0;
   margin-top: 16px;
 }
-.pl-keywords {
-  margin-top: 16px;
+/* Paper Passport. A card until 编辑 is pressed, and a form only then. Chips wrap instead
+   of scrolling, so the panel stays readable at 280px. */
+.pl-passport-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 2px 12px;
+  align-items: start;
 }
-.pl-keywords h3 {
-  font-size: 16px;
-  margin: 20px 0 8px;
-}
-.pl-keyword-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  padding: 0;
-  margin: 8px 0;
-  list-style: none;
-}
-.pl-keyword-list li {
-  padding: 6px 12px;
-  background: #e4e9db;
-  color: #384830;
-  border-radius: 16px 12px 18px 13px;
-  overflow-wrap: anywhere;
-  max-width: 100%;
-}
-.pl-keywords .pl-paper-title {
+.pl-body .pl-paper-title {
+  grid-column: 1;
+  grid-row: 1;
+  margin: 0;
   font-family: 'Palatino Linotype', 'SimSun', serif;
   font-size: 16px;
   color: var(--pl-brown);
+  overflow-wrap: anywhere;
+}
+/* The only control the card carries. Sized like a label, not like a button. */
+.pl-body .pl-passport-edit {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  align-self: start;
+  min-height: 28px;
+  padding: 3px 12px;
+  font-size: 12px;
+  background: transparent;
+}
+.pl-body .pl-passport-meta {
+  grid-column: 1;
+  grid-row: 2;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  margin: 2px 0 0;
+}
+.pl-identity {
+  color: var(--pl-muted);
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+.pl-badges {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.pl-body .pl-passport-hint {
+  margin: 8px 0 0;
+}
+.pl-block {
+  margin-top: 20px;
+}
+.pl-body .pl-block-title {
+  margin: 0 0 8px;
+  padding-bottom: 5px;
+  border-bottom: 1px solid var(--pl-line);
+  color: var(--pl-muted);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+}
+/* Label and value share one row, which is what makes the card scannable. */
+.pl-dims {
+  display: grid;
+  gap: 1px;
+}
+.pl-dim {
+  display: grid;
+  grid-template-columns: 5.5em minmax(0, 1fr);
+  gap: 1px 10px;
+  align-items: baseline;
+  min-height: 28px;
+  padding: 2px 0;
+}
+.pl-dim-label {
+  color: var(--pl-muted);
+  font-size: 12px;
+  letter-spacing: 0.02em;
+}
+.pl-chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+.pl-empty {
+  color: #a8a29e;
+}
+.pl-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  max-width: 100%;
+  padding: 5px 12px;
+  background: #e4e9db;
+  color: var(--pl-olive);
+  border-radius: 16px 12px 18px 13px;
+  font-size: 13px;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+/* A term the user added stays visually distinct from the model's own. */
+.pl-chip-manual {
+  background: #f0e4d0;
+  color: var(--pl-brown);
+}
+.pl-chip-zh {
+  font-weight: 600;
+}
+.pl-chip-en {
+  color: var(--pl-muted);
+  font-size: 12px;
+  opacity: 0.85;
+}
+.pl-chip-view {
+  padding: 4px 10px;
+  font-size: 12px;
+}
+.pl-body .pl-chip-remove {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  min-height: 20px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: inherit;
+  font-size: 14px;
+  line-height: 1;
+  opacity: 0.6;
+}
+.pl-body .pl-chip-remove:not(:disabled):hover {
+  opacity: 1;
+  background: rgba(92, 64, 51, 0.14);
+  color: var(--pl-brown);
+  border-radius: 50%;
+  transform: none;
+}
+/* A hairline instead of a card: the sentence is a value, not a section of its own. */
+.pl-body .pl-memory-view {
+  margin: 0;
+  padding: 4px 0 4px 12px;
+  border-left: 2px solid #dfe3d5;
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+.pl-memory-edit {
+  display: grid;
+  gap: 4px;
+  justify-items: start;
+}
+.pl-memory-edit > input {
+  width: 100%;
+}
+/* Long labels would otherwise out-shout the content they belong to. */
+.pl-body .pl-link-button {
+  min-height: 30px;
+  padding: 4px 10px;
+  margin-top: 2px;
+  background: transparent;
+  border-color: transparent;
+  color: var(--pl-muted);
+  font-size: 12px;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+.pl-body .pl-link-button:not(:disabled):hover {
+  background: transparent;
+  border-color: transparent;
+  color: var(--pl-olive);
+  transform: none;
+}
+.pl-kw-add {
+  margin-top: 10px;
+}
+.pl-kw-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 8px;
+  margin-top: 8px;
+  padding: 12px;
+  background: #f3f0e9;
+  border-radius: 18px 15px 20px 16px;
+}
+.pl-body .pl-kw-form label {
+  margin: 0;
+}
+.pl-body .pl-kw-form > button {
+  margin-top: 2px;
+}
+.pl-findings {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: pl-finding;
+}
+.pl-finding {
+  counter-increment: pl-finding;
+  display: grid;
+  grid-template-columns: 1.3em minmax(0, 1fr);
+  gap: 0 6px;
+  padding: 3px 0;
+}
+.pl-finding::before {
+  content: counter(pl-finding) '.';
+  color: #a8a29e;
+  font-size: 12px;
+}
+.pl-finding-zh {
+  font-weight: 600;
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+.pl-finding-en {
+  display: block;
+  color: var(--pl-muted);
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+/* The dash that stands in for an empty list is a line, not a paragraph. */
+.pl-body .pl-block > .pl-empty {
+  margin: 0;
+}
+.pl-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  background: #eceae3;
+  color: var(--pl-brown);
+  border-radius: 12px 10px 13px 11px;
+  font-size: 12px;
+  line-height: 1.35;
+  white-space: nowrap;
+}
+.pl-badge {
+  padding: 2px 8px;
+  background: #e4e9db;
+  color: var(--pl-olive);
+  font-size: 11px;
+}
+.pl-workflow-selects {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 0 12px;
+}
+.pl-body .pl-workflow-selects label {
+  margin: 0 0 4px;
+}
+.pl-uses {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 4px;
+}
+.pl-body .pl-use-title {
+  margin: 14px 0 0;
+}
+/* Selected uses are a filled chip; the rest are an outline waiting to be picked. */
+.pl-body .pl-use {
+  min-height: 30px;
+  padding: 4px 12px;
+  background: transparent;
+  border-color: #c7bbaa;
+  color: var(--pl-muted);
+  border-radius: 16px 12px 18px 13px;
+  font-size: 12px;
+  font-weight: 400;
+}
+.pl-body .pl-use[aria-pressed='true'] {
+  background: #e4e9db;
+  border-color: #b7c3a7;
+  color: var(--pl-olive);
+  font-weight: 600;
+}
+.pl-body .pl-use:not(:disabled):hover {
+  background: #eceae4;
+  border-color: #b7c3a7;
+  color: var(--pl-olive);
+  border-radius: 16px 12px 18px 13px;
+  transform: none;
+}
+.pl-body .pl-use[aria-pressed='true']:not(:disabled):hover {
+  background: #dbe3cd;
 }
 @container paper-lens (min-width:440px) {
   .pl-body {
@@ -366,6 +624,15 @@
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     gap: 0 16px;
   }
+  /* Only pair the two language boxes up once there is room for two usable inputs. */
+  .pl-kw-form {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 8px 16px;
+  }
+  .pl-kw-form > label:first-child,
+  .pl-kw-form > button {
+    grid-column: 1 / -1;
+  }
   .pl-rule > div {
     grid-column: 1 / -1;
   }
@@ -383,6 +650,14 @@
   }
   .pl-header {
     gap: 8px;
+  }
+  /* At 280px a label column next to wrapping chips leaves too little room for both. */
+  .pl-dim {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+  }
+  .pl-workflow-selects {
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 @media (prefers-reduced-motion: reduce) {

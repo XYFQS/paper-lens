@@ -98,42 +98,22 @@
       this.mountWorkspace();
       this.sectionHost = this.pages.search;
       this.mountSearch();
-      this.mountPreview();
-      this.sectionHost = this.pages.prepare;
+      this.mountPassport();
+      this.sectionHost = this.pages.library;
       this.mountMetadata();
       this.sectionHost = this.pages.settings;
       this.mountAPI();
       this.mountLibrarySettings();
       this.sectionHost = null;
-      this.selectPage(Object.keys(this.app.data.records).length ? 'search' : 'prepare');
+      this.selectPage(Object.keys(this.app.data.records).length ? 'search' : 'library');
       this.menu = this.doc.createXULElement('menuitem');
       this.menu.setAttribute('label', '文献透镜：显示 / 隐藏');
       this.menu.addEventListener('command', () => this.toggle());
       this.doc.getElementById('menu_ToolsPopup').append(this.menu);
-      this.keywords.append(
-        this.el('p', '请在主列表选择一篇论文。', {
-          class: 'muted',
-        }),
-      );
       this.navigation = new root.LensSidebarToggle(this);
       this.watchPanes();
       this.collections();
       this.render();
-    }
-    mountPreview() {
-      const preview = this.section('所选论文的研究关键词');
-      this.lang = this.select(preview, '显示语言', [
-        ['zh', '中文'],
-        ['en', 'English'],
-      ]);
-      this.lang.value = this.app.get('language', 'zh');
-      this.lang.onchange = () => {
-        this.app.set('language', this.lang.value);
-        this.preview();
-      };
-      preview.append(this.button('查看所选论文', () => this.preview()));
-      this.keywords = this.el('div', undefined, { class: 'pl-keywords', 'aria-live': 'polite' });
-      preview.append(this.keywords);
     }
     subheading(parent, title, description, className = '') {
       parent.append(this.el('h3', title, { class: className }));
@@ -221,35 +201,6 @@
       ]);
       if (cols.some((c) => String(c.id) === old)) this.scopeSelect.value = old;
     }
-    preview() {
-      let item = this.win.ZoteroPane.getSelectedItems()[0];
-      const reader = Z.Reader.getByTabID(this.win.Zotero_Tabs.selectedID);
-      if (reader) item = Z.Items.get(reader.itemID);
-      if (item?.parentID) item = Z.Items.get(item.parentID);
-      const record = item && this.app.data.records[item.key];
-      this.keywords.replaceChildren();
-      this.keywords.append(
-        this.el('p', record?.metadata.title || '请在主列表选择一篇论文。', {
-          class: 'pl-paper-title',
-        }),
-      );
-      const labels = { region: '研究区域', subject: '研究对象', method: '研究方法' };
-      if (!record?.labels) {
-        this.keywords.append(this.el('p', '暂无有效 AI 关键词，请先生成。'));
-        return;
-      }
-      for (const k of root.LensCore.categories) {
-        this.keywords.append(this.el('h3', labels[k]));
-        const words = record.labels[this.lang.value][k];
-        if (!words.length) {
-          this.keywords.append(this.el('p', '无足够信息', { class: 'muted' }));
-          continue;
-        }
-        const list = this.el('ul', undefined, { class: 'pl-keyword-list' });
-        list.append(...words.map((w) => this.el('li', w)));
-        this.keywords.append(list);
-      }
-    }
     render() {
       if (!this.status) return;
       this.status.textContent = this.app.message;
@@ -258,12 +209,14 @@
       this.updateSearchControls();
       this.renderAPI();
       this.renderWorkspace();
+      this.renderPassport();
       this.status.hidden = !this.app.message;
       this.cancel.hidden = !this.app.token;
     }
     destroy() {
       this.paneObserver?.disconnect();
       if (this.tabObserverID) Z.Notifier.unregisterObserver(this.tabObserverID);
+      if (this.passportObserverID) Z.Notifier.unregisterObserver(this.passportObserverID);
       this.navigation?.destroy();
       this.panel?.remove();
       this.split?.remove();
@@ -276,6 +229,7 @@
     root.LensWorkspaceUI,
     root.LensLibraryUI,
     root.LensSearchUI,
+    root.LensPassportUI,
     root.LensAPIUI,
   );
   root.LensView = View;

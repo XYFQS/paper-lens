@@ -9,13 +9,13 @@
       this.subheading(finder, '全局搜索', '', 'pl-global-title');
       this.query = this.field(finder, '搜索内容', 'input', {
         type: 'search',
-        placeholder: '例如：中国 植被（空格分隔）',
+        placeholder: '例如：中国 遥感（空格分隔，同时匹配记忆句与结论）',
       });
       const filterHeading = this.el('div', undefined, { class: 'pl-filter-heading' });
       this.subheading(
         filterHeading,
         '条件搜索',
-        '按条目类型、研究区域、对象或方法筛选。',
+        '按条目类型、六类研究关键词、年份、期刊或阅读进度筛选。',
         'pl-condition-title',
       );
       this.filterPanel = this.el('div', undefined, { id: 'pl-filters' });
@@ -58,9 +58,17 @@
       const box = this.el('div', undefined, { class: 'pl-rule' });
       const field = this.select(box, '字段', [
         ['itemType', '条目类型'],
+        ['topic', '研究主题'],
         ['region', '研究区域'],
-        ['subject', '研究对象'],
+        ['object', '研究对象'],
         ['method', '研究方法'],
+        ['dataset', '数据来源'],
+        ['variable', '指标变量'],
+        ['year', '年份'],
+        ['journal', '期刊'],
+        ['readingStatus', '阅读状态'],
+        ['importance', '重要程度'],
+        ['role', '在论文中的用途'],
       ]);
       const op = this.select(box, '判断', [
         ['has', '包含 / 是'],
@@ -69,17 +77,23 @@
       const valueBox = this.el('div');
       box.append(valueBox);
       let value;
+      const titles = { year: '年份（例如 2024）', journal: '期刊名' };
       const update = () => {
         valueBox.replaceChildren();
-        value =
-          field.value === 'itemType'
-            ? this.select(valueBox, '值', [
-                ['', '不限'],
-                ...root.Zotero.ItemTypes.getTypes()
-                  .filter((type) => !['note', 'attachment', 'annotation'].includes(type.name))
-                  .map((type) => [type.name, root.Zotero.ItemTypes.getLocalizedString(type.id)]),
-              ])
-            : this.field(valueBox, '关键词（支持中英）');
+        const name = field.value;
+        if (name === 'itemType')
+          value = this.select(valueBox, '值', [
+            ['', '不限'],
+            ...root.Zotero.ItemTypes.getTypes()
+              .filter((type) => !['note', 'attachment', 'annotation'].includes(type.name))
+              .map((type) => [type.name, root.Zotero.ItemTypes.getLocalizedString(type.id)]),
+          ]);
+        else if (name === 'readingStatus')
+          value = this.select(valueBox, '值', root.LensCore.readingStatuses);
+        else if (name === 'importance')
+          value = this.select(valueBox, '值', root.LensCore.importances);
+        else if (name === 'role') value = this.select(valueBox, '值', root.LensCore.roles);
+        else value = this.field(valueBox, titles[name] ?? '关键词（支持中英）');
       };
       field.onchange = update;
       update();
