@@ -151,12 +151,36 @@
       );
       manage.append(this.workflowView, this.workflowEdit);
 
-      this.passportObserverID = root.Zotero.Notifier.registerObserver(
-        { notify: (event) => event === 'select' && this.renderPassport() },
-        ['item'],
-        'paper-lens-passport',
-      );
+      this.selectionView = null;
+      this.selectionListener = null;
+      this.bindItemSelection();
       this.renderPassport();
+    },
+
+    /**
+     * The passport follows the main list, so it listens to the item tree's own select event.
+     * Zotero.Notifier never fires a 'select' event for items — it only does so for tabs — so an
+     * ['item'] observer can never see a selection change. The tree fires this one on a click,
+     * on an arrow key, and when a temporary search result row becomes the active view.
+     *
+     * Binding is idempotent and re-checked on every render: the tree does not exist yet when the
+     * pane mounts, and ZoteroPane.itemsView is replaced wholesale on some collection changes.
+     * Comparing the tree first is what keeps a second listener from ever being stacked on it.
+     */
+    bindItemSelection() {
+      const itemsView = this.win.ZoteroPane?.itemsView;
+      if (!itemsView?.onSelect || this.selectionView === itemsView) return;
+      this.unbindItemSelection();
+      this.selectionView = itemsView;
+      this.selectionListener = () => this.renderPassport();
+      itemsView.onSelect.addListener(this.selectionListener);
+    },
+
+    unbindItemSelection() {
+      if (this.selectionListener)
+        this.selectionView?.onSelect?.removeListener(this.selectionListener);
+      this.selectionView = null;
+      this.selectionListener = null;
     },
 
     /** One passport section: a small heading over a hairline, never a card inside a card. */

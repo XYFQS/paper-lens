@@ -526,21 +526,33 @@
   gap: 0 6px;
   padding: 3px 0;
 }
+/* Number, Chinese line and English line are placed explicitly. Left to auto-placement the
+   English line takes the next free cell, which is the 1.3em number column, and wraps to a
+   letter or two per line. Both languages belong in the text column, one row each. */
 .pl-finding::before {
   content: counter(pl-finding) '.';
+  grid-column: 1;
+  grid-row: 1;
   color: #a8a29e;
   font-size: 12px;
 }
-.pl-finding-zh {
-  font-weight: 600;
-  font-size: 13px;
+.pl-finding-zh,
+.pl-finding-en {
+  grid-column: 2;
+  min-width: 0;
+  word-break: normal;
+  white-space: normal;
   overflow-wrap: anywhere;
 }
+.pl-finding-zh {
+  grid-row: 1;
+  font-weight: 600;
+  font-size: 13px;
+}
 .pl-finding-en {
-  display: block;
+  grid-row: 2;
   color: var(--pl-muted);
   font-size: 12px;
-  overflow-wrap: anywhere;
 }
 /* The dash that stands in for an empty list is a line, not a paragraph. */
 .pl-body .pl-block > .pl-empty {

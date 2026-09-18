@@ -518,37 +518,49 @@ var runNative = async function () {
     !view.panel.hidden && nav.getAttribute('aria-pressed') === 'true',
     'native rail button reopens sidebar',
   );
-  view.itemPane.setAttribute('collapsed', 'true');
+  // The plugin pane and Zotero's native panes are independent panels. Collapsing a native
+  // pane must never take the plugin pane with it, in either direction.
+  const itemPane = view.doc.getElementById('zotero-item-pane');
+  itemPane.setAttribute('collapsed', 'true');
   await Z.Promise.delay(0);
-  assert(view.panel.hidden, 'collapsing native item pane hides plugin sidebar');
-  view.itemPane.removeAttribute('collapsed');
-  await Z.Promise.delay(0);
-  assert(!view.panel.hidden, 'expanding native item pane restores plugin sidebar');
-  nav.click();
-  assert(view.panel.hidden, 'rail button still hides sidebar after native pane changes');
-  nav.click();
-  assert(!view.panel.hidden, 'rail button still reopens sidebar after native pane changes');
-  // Reader and note tabs collapse the context pane instead of the item pane.
-  // Zotero_Tabs.selectedType is a non-configurable getter and the isolated profile has no
-  // reader tab, so force the reader branch to reach the context pane path.
-  const usesContextPane = view.usesContextPane;
-  view.usesContextPane = () => true;
-  win.ZoteroContextPane.collapsed = true;
-  await Z.Promise.delay(0);
-  assert(view.panel.hidden, 'collapsing reader context pane hides plugin sidebar');
-  win.ZoteroContextPane.collapsed = false;
-  await Z.Promise.delay(0);
-  assert(!view.panel.hidden, 'expanding reader context pane restores plugin sidebar');
-  win.ZoteroContextPane.collapsed = true;
-  await Z.Promise.delay(0);
-  assert(view.panel.hidden, 'reader context pane collapse hides sidebar again');
+  assert(
+    itemPane.getAttribute('collapsed') === 'true' && !view.panel.hidden,
+    'collapsing native item pane keeps plugin sidebar visible',
+  );
   nav.click();
   assert(
-    !view.panel.hidden && !win.ZoteroContextPane.collapsed,
-    'rail button expands collapsed context pane and shows sidebar',
+    view.panel.hidden && itemPane.getAttribute('collapsed') === 'true',
+    'rail button hides only the plugin sidebar while the native pane stays collapsed',
   );
-  view.usesContextPane = usesContextPane;
+  nav.click();
+  assert(
+    !view.panel.hidden && itemPane.getAttribute('collapsed') === 'true',
+    'rail button reopens only the plugin sidebar and never expands the native pane',
+  );
+  itemPane.removeAttribute('collapsed');
+  await Z.Promise.delay(0);
+  assert(
+    !view.panel.hidden,
+    'expanding native item pane leaves the plugin sidebar as the user left it',
+  );
   win.ZoteroContextPane.collapsed = true;
+  await Z.Promise.delay(0);
+  assert(
+    win.ZoteroContextPane.collapsed && !view.panel.hidden,
+    'collapsing reader context pane keeps plugin sidebar visible',
+  );
+  nav.click();
+  assert(
+    view.panel.hidden && win.ZoteroContextPane.collapsed,
+    'rail button hides only the plugin sidebar while the context pane stays collapsed',
+  );
+  nav.click();
+  assert(
+    !view.panel.hidden && win.ZoteroContextPane.collapsed,
+    'rail button never expands the collapsed context pane',
+  );
+  win.ZoteroContextPane.collapsed = false;
+  await Z.Promise.delay(0);
   assert(
     view.finder.localName === 'details' && view.finder.open,
     'search module is collapsible and initially open',
@@ -838,6 +850,65 @@ var runNative = async function () {
     'the edit controls stack and stay inside the panel at 280, 380 and 600px',
   );
   await click(view.editButton);
+  // The passport follows the main list on a plain selection change: no reader, no double click,
+  // no manual refresh. The previous ['item'] Notifier observer could never have fired, because
+  // Zotero only ever triggers a 'select' event for tabs, never for items.
+  const pick = async (item) => {
+    win.ZoteroPane.selectItem(item.id);
+    for (let i = 0; i < 40 && view.passportKey !== item.key; i++) await Z.Promise.delay(50);
+  };
+  await pick(items[1]);
+  assert(
+    view.passportKey === items[1].key && view.passportTitle.textContent === 'Vegetation study 1',
+    'a single main-list selection change moves the passport to that paper',
+  );
+  await pick(items[0]);
+  assert(
+    view.passportKey === items[0].key && view.passportTitle.textContent === 'Vegetation study 0',
+    'selecting the previous paper moves the passport back without opening a reader',
+  );
+  const boundListeners = () => view.selectionView?._events?.select?.listeners,
+    stacked = boundListeners()?.size ?? 0;
+  view.bindItemSelection();
+  view.bindItemSelection();
+  assert(
+    boundListeners()?.has(view.selectionListener) === true &&
+      (boundListeners()?.size ?? 0) === stacked,
+    'binding the selection listener again never stacks a second one',
+  );
+  view.passportKey = null;
+  view.notify('select');
+  assert(
+    view.passportKey === items[0].key,
+    'coming back to the library re-reads its own selection',
+  );
+  // Both languages of a finding belong in the text column. Auto-placement used to drop the
+  // English line into the 1.3em number column, wrapping it a letter or two per line.
+  const finding = view.findingsList.querySelector('.pl-finding'),
+    findingZh = finding?.querySelector('.pl-finding-zh'),
+    findingEn = finding?.querySelector('.pl-finding-en'),
+    computed = (e) => view.win.getComputedStyle(e);
+  assert(!!findingZh && !!findingEn, 'a finding renders both languages for the layout check');
+  assert(
+    computed(findingZh).gridColumnStart === '2' && computed(findingEn).gridColumnStart === '2',
+    'both finding languages are placed in the text column',
+  );
+  for (const width of [280, 380, 600]) {
+    view.panel.style.width = view.panel.style.minWidth = view.panel.style.maxWidth = `${width}px`;
+    const number = parseFloat(computed(finding).gridTemplateColumns.split(' ')[0]),
+      zhRect = findingZh.getBoundingClientRect(),
+      enRect = findingEn.getBoundingClientRect();
+    assert(
+      Math.abs(enRect.left - zhRect.left) < 1 &&
+        enRect.width > number * 2 &&
+        computed(findingEn).wordBreak === 'normal',
+      `the English finding keeps the full text width at ${width}px`,
+    );
+    assert(
+      view.body.scrollWidth <= view.body.clientWidth + 1,
+      `findings cause no horizontal overflow at ${width}px`,
+    );
+  }
   view.panel.style.width = view.panel.style.minWidth = view.panel.style.maxWidth = '';
   view.selectPage('settings');
   // A stored key locks the fields, so unlocking is what the first click does.

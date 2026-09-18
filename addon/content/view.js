@@ -111,7 +111,7 @@
       this.menu.addEventListener('command', () => this.toggle());
       this.doc.getElementById('menu_ToolsPopup').append(this.menu);
       this.navigation = new root.LensSidebarToggle(this);
-      this.watchPanes();
+      this.watchTabs();
       this.collections();
       this.render();
     }
@@ -120,62 +120,28 @@
       if (description)
         parent.append(this.el('p', description, { class: 'muted pl-section-description' }));
     }
-    // Zotero marks a collapsed pane with collapsed="true" and removes the attribute to expand,
-    // so presence alone never means collapsed.
-    itemPaneCollapsed() {
-      return this.itemPane?.getAttribute('collapsed') === 'true';
-    }
-    // Library tabs drive #zotero-item-pane. Reader and note tabs drive the context pane
-    // instead, and that one stays collapsed="true" the whole time a library tab is selected,
-    // so it is only a usable signal while a non-library tab is showing.
-    usesContextPane() {
-      return this.win.Zotero_Tabs?.selectedType !== 'library';
-    }
-    activePaneCollapsed() {
-      return this.usesContextPane()
-        ? !!this.win.ZoteroContextPane?.collapsed
-        : this.itemPaneCollapsed();
-    }
     applyVisibility() {
-      const hidden = this.userHidden || this.activePaneCollapsed();
+      // Paper Lens is shown or hidden only by its own rail button. Zotero's native item pane
+      // and context pane are separate panels with their own collapse buttons, and collapsing
+      // either of them must leave this pane exactly as the user left it.
+      const hidden = this.userHidden;
       this.panel.hidden = hidden;
       this.split.hidden = hidden;
       this.navigation?.update();
     }
-    watchPanes() {
-      this.itemPane = this.doc.getElementById('zotero-item-pane');
-      this.paneObserver = new this.win.MutationObserver(() => this.applyVisibility());
-      // Collapsing the context pane updates its splitters, not the pane box on its own.
-      for (const [node, attributeFilter] of [
-        [this.itemPane, ['collapsed']],
-        [this.doc.getElementById('zotero-context-pane'), ['collapsed']],
-        [this.doc.getElementById('zotero-context-splitter'), ['state', 'hidden']],
-        [this.doc.getElementById('zotero-context-splitter-stacked'), ['state', 'hidden']],
-      ]) {
-        if (node) this.paneObserver.observe(node, { attributes: true, attributeFilter });
-      }
-      // Zotero_Tabs.select() is the only signal for a library/reader switch.
+    watchTabs() {
+      // Zotero_Tabs.select() is the only signal for a library/reader switch. Coming back to the
+      // library has to put the passport on the library's own selection again, and the item tree
+      // may only have been created by then.
       this.tabObserverID = Z.Notifier.registerObserver(this, ['tab']);
       this.applyVisibility();
     }
     notify(event) {
-      if (event === 'select') this.applyVisibility();
-    }
-    expandActivePane() {
-      if (this.usesContextPane()) {
-        if (this.win.ZoteroContextPane) this.win.ZoteroContextPane.collapsed = false;
-      } else if (this.itemPane) {
-        this.itemPane.collapsed = false;
-      }
+      if (event !== 'select') return;
+      this.bindItemSelection();
+      this.renderPassport();
     }
     toggle() {
-      // Match Zotero's own pane buttons: clicking while collapsed expands the pane.
-      if (this.activePaneCollapsed()) {
-        this.userHidden = false;
-        this.expandActivePane();
-        this.applyVisibility();
-        return;
-      }
       this.userHidden = !this.userHidden;
       this.applyVisibility();
     }
@@ -209,14 +175,16 @@
       this.updateSearchControls();
       this.renderAPI();
       this.renderWorkspace();
+      // Cheap and idempotent: the item tree does not exist yet when the pane is first mounted,
+      // so the binding is retried here until it lands.
+      this.bindItemSelection();
       this.renderPassport();
       this.status.hidden = !this.app.message;
       this.cancel.hidden = !this.app.token;
     }
     destroy() {
-      this.paneObserver?.disconnect();
+      this.unbindItemSelection();
       if (this.tabObserverID) Z.Notifier.unregisterObserver(this.tabObserverID);
-      if (this.passportObserverID) Z.Notifier.unregisterObserver(this.passportObserverID);
       this.navigation?.destroy();
       this.panel?.remove();
       this.split?.remove();
