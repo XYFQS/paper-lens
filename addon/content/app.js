@@ -457,7 +457,8 @@
       const row = new Z.CollectionTreeRow(pane.collectionsView, 'search', search);
       this.searchSerial = (this.searchSerial || 0) + 1;
       Object.defineProperty(row, 'id', { value: 'paper-lens-' + this.searchSerial });
-      Z.CollectionTreeCache.clear();
+      Z.CollectionTreeCache?.clear();
+      row.clearCache?.();
       await pane.itemsView.changeCollectionTreeRow(row);
       this.status(
         `找到 ${matches.length} 篇，已显示在 Zotero 主列表。${items.length > available.length ? ` ${items.length - available.length} 篇尚未索引。` : ''}`,

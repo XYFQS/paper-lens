@@ -43,7 +43,7 @@ fs.writeFileSync(
         id: 'paper-lens-test@local.zotero',
         update_url: 'https://example.invalid/test.json',
         strict_min_version: '9.0.6',
-        strict_max_version: '9.0.*',
+        strict_max_version: '10.0.*',
       },
     },
   }),

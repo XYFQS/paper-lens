@@ -16,8 +16,8 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build.ps1
 
 | 文件                               | 用途                        |
 | ---------------------------------- | --------------------------- |
-| `dist/paper-lens-2.0.1.xpi`        | 用户直接安装的插件包        |
-| `dist/paper-lens-2.0.1-source.zip` | 完整源码与文档              |
+| `dist/paper-lens-2.0.2.xpi`        | 用户直接安装的插件包        |
+| `dist/paper-lens-2.0.2-source.zip` | 完整源码与文档              |
 | `dist/SHA256SUMS.txt`              | 两个压缩包的 SHA-256 校验值 |
 
 文件名里的版本号取自 `addon/manifest.json`，改完版本号后表格这两行要同步更新。`dist/` 被 Git 忽略，因此 VS Code 同步源码不会上传安装包。这三个文件应作为 Release 附件上传。
@@ -27,8 +27,8 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build.ps1
 ## 2. 创建 Release
 
 1. 打开仓库的 **Releases**，点击 **Draft a new release**（首次可能显示 **Create a new release**）。
-2. 在 **Choose a tag** 中创建 `v2.0.1`，**Target** 选择刚推送源码所在的分支。仓库早期标签 `V1.0.0` 用的是大写，从 `v1.0.1` 起改用小写 `v`，后续保持小写。
-3. 标题填写 `文献透镜 Paper Lens v2.0.1`，填写下方发布说明。
+2. 在 **Choose a tag** 中创建 `v2.0.2`，**Target** 选择刚推送源码所在的分支。仓库早期标签 `V1.0.0` 用的是大写，从 `v1.0.1` 起改用小写 `v`，后续保持小写。
+3. 标题填写 `文献透镜 Paper Lens v2.0.2`，填写下方发布说明。
 4. 将 `dist/` 中上述三个文件拖入附件上传区，等待上传完成。
 5. 正式版不勾选 **This is a pre-release**；检查内容后点击 **Publish release**。需要暂存时选 **Save draft**。
 
@@ -37,7 +37,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build.ps1
 可直接使用的发布说明：
 
 ```markdown
-文献透镜 2.0.1，支持 Windows / Zotero 9.0.6。相对 1.0.2 是一次大版本更新：关键词从三类扩展为六类，新增文献身份证、记忆句、人工校正和十二个检索维度。
+文献透镜 2.0.2，支持 Windows / Zotero 9.0.6 至 10.0.x。相对 1.0.2 是一次大版本更新：关键词从三类扩展为六类，新增文献身份证、记忆句、人工校正和十二个检索维度。
 
 新增
 
@@ -68,7 +68,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build.ps1
 
 从 1.0.2 升级不需要任何手动操作。首次读取文献信息时，插件会自动把旧索引升级为新结构，并在同一目录写入 index-v1-backup.json 备份。原有的研究区域、研究对象、研究方法关键词会保留并标记为“旧版关键词”，主题、数据、变量三类为空，建议重新生成一次画像补齐；文献信息、标签归属记录和人工标签都会保留。
 
-安装：下载 paper-lens-2.0.1.xpi，在 Zotero 中选择“工具 → 插件 → 齿轮 → 从文件安装插件”。无需解压，从 1.x 升级直接安装即可。
+安装：下载 paper-lens-2.0.2.xpi，在 Zotero 中选择“工具 → 插件 → 齿轮 → 从文件安装插件”。无需解压，从 1.x 升级直接安装即可。
 
 不读取 PDF 全文，不推测论文结果，不移动文献，不管理文献分类；生成画像需自备 API Key，可能产生服务商费用。
 当前版本需手动下载安装更新。
